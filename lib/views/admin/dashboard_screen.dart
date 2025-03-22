@@ -1,5 +1,6 @@
 // lib/views/admin/dashboard_screen.dart
 import 'package:flutter/material.dart';
+import 'package:portfolio_website/views/admin/social/social_links_manager.dart' show SocialLinksManagerScreen;
 import 'package:provider/provider.dart';
 import 'package:portfolio_website/services/auth_service.dart';
 import 'package:portfolio_website/viewmodels/theme_viewmodel.dart';
@@ -8,7 +9,9 @@ import 'package:portfolio_website/widgets/theme_toggle_button.dart';
 // Import admin screens
 import 'package:portfolio_website/views/admin/projects/project_manager.dart';
 import 'package:portfolio_website/views/admin/services/services_manager.dart';
+import 'package:portfolio_website/views/admin/profile/profile_editor.dart';
 import 'package:portfolio_website/views/admin/analytics/analytics_dashboard.dart';
+import 'package:portfolio_website/views/admin/settings/settings_page.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -25,6 +28,13 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late int _selectedIndex;
   
+  // Method to update selected index (used for quick actions)
+  void _updateSelectedIndex(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+  
   // Navigation items with icons and labels
   final List<Map<String, dynamic>> _navItems = [
     {'icon': Icons.dashboard, 'label': 'Dashboard'},
@@ -37,20 +47,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   ];
   
   // Content screens for each nav item
-  final List<Widget> _screens = [
-    const _DashboardOverview(),
-    const ProjectManagerScreen(),
-    const ServicesManagerScreen(),
-    const Center(child: Text('Profile Editor')), 
-    const Center(child: Text('Social Links Manager')),
-    const AnalyticsDashboardScreen(),
-    const Center(child: Text('Settings')),
-  ];
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialTabIndex;
+    
+    // Initialize screens list
+    _screens = [
+      const _DashboardOverview(),
+      const ProjectManagerScreen(),
+      const ServicesManagerScreen(),
+      const ProfileEditorScreen(),
+      const SocialLinksManagerScreen(),
+      const AnalyticsDashboardScreen(),
+      const SettingsPage(),
+    ];
   }
 
   @override
@@ -139,7 +152,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 }
 
-// Dashboard Overview Screen
+// Dashboard Overview Screen - keep as is
 class _DashboardOverview extends StatelessWidget {
   const _DashboardOverview();
 
@@ -362,7 +375,7 @@ class _DashboardOverview extends StatelessWidget {
             ),
             title: Text(activity['message'] ?? ''),
             subtitle: Text(activity['time'] ?? ''),
-            trailing: const Icon(Icons.arrow_forward_ios, size:.16),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               // Navigate to detail page or show more info
             },
@@ -378,21 +391,25 @@ class _DashboardOverview extends StatelessWidget {
         'icon': Icons.add_circle,
         'label': 'Add New Project',
         'color': Colors.blue,
+        'index': 1, // Projects tab index
       },
       {
         'icon': Icons.edit,
         'label': 'Update Profile',
         'color': Colors.orange,
+        'index': 3, // Profile tab index
       },
       {
         'icon': Icons.analytics,
         'label': 'View Analytics',
         'color': Colors.purple,
+        'index': 5, // Analytics tab index
       },
       {
-        'icon': Icons.cloud_upload,
-        'label': 'Upload Media',
+        'icon': Icons.link,
+        'label': 'Manage Links',
         'color': Colors.green,
+        'index': 4, // Social links tab index
       },
     ];
     
@@ -405,7 +422,11 @@ class _DashboardOverview extends StatelessWidget {
       children: actions.map((action) {
         return InkWell(
           onTap: () {
-            // Navigate to the specific screen
+            // Navigate to the specific screen by updating selectedIndex
+            if (action.containsKey('index')) {
+              int index = action['index'] as int;
+              (context.findAncestorStateOfType<_AdminDashboardScreenState>())?._updateSelectedIndex(index);
+            }
           },
           borderRadius: BorderRadius.circular(12),
           child: Container(
