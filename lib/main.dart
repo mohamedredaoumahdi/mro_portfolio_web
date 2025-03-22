@@ -6,11 +6,13 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'theme/app_theme.dart';
 import 'viewmodels/project_viewmodel.dart';
 import 'viewmodels/service_viewmodel.dart';
 import 'viewmodels/contact_viewmodel.dart';
+import 'viewmodels/theme_viewmodel.dart';
 import 'views/home/home_screen.dart';
 
 // Flag to track whether we're using Firebase
@@ -103,12 +105,17 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProjectViewModel()),
         ChangeNotifierProvider(create: (_) => ServiceViewModel()),
         ChangeNotifierProvider(create: (_) => ContactViewModel()),
+        ChangeNotifierProvider(create: (_) => ThemeViewModel()),
       ],
-      child: MaterialApp(
-        title: 'Mohamed Reda Oumahdi - Mobile App Developer',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.theme,
-        home: const HomeScreen(),
+      child: Consumer<ThemeViewModel>(
+        builder: (context, themeViewModel, _) {
+          return MaterialApp(
+            title: 'Mohamed Reda Oumahdi - Mobile App Developer',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.getTheme(isDarkMode: themeViewModel.isDarkMode),
+            home: const HomeScreen(),
+          );
+        },
       ),
     );
   }

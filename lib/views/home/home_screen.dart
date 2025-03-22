@@ -7,6 +7,8 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../widgets/responsive_wrapper.dart';
 import '../../viewmodels/project_viewmodel.dart';
 import '../../viewmodels/service_viewmodel.dart';
+import '../../viewmodels/theme_viewmodel.dart';
+import '../../theme/app_theme.dart';
 import '../services/services_section.dart';
 import '../projects/projects_section.dart';
 import '../contact/contact_section.dart';
@@ -48,6 +50,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get current theme mode
+    final themeViewModel = Provider.of<ThemeViewModel>(context);
+    final isDarkMode = themeViewModel.isDarkMode;
+    
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
@@ -73,14 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 minHeight: MediaQuery.of(context).size.height * 0.9,
               ),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Theme.of(context).colorScheme.background,
-                    Theme.of(context).colorScheme.background.withOpacity(0.8),
-                  ],
-                ),
+                gradient: AppTheme.getBackgroundGradient(isDarkMode: isDarkMode),
               ),
               child: ResponsiveContainer(
                 child: SingleChildScrollView(

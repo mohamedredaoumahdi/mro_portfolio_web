@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/responsive_wrapper.dart';
+import '../../../widgets/theme_toggle_button.dart';
 
 class NavBar extends StatelessWidget {
   final Function(int) onNavItemTapped;
@@ -56,6 +57,9 @@ class _DesktopNavBar extends StatelessWidget {
                 index: 3,
                 onTap: onNavItemTapped,
               ),
+              const SizedBox(width: 12),
+              // Add theme toggle button
+              const ThemeToggleButton(isInAppBar: true),
             ],
           )
         ],
@@ -80,12 +84,19 @@ class _MobileNavBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _LogoSection(),
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              Scaffold.of(context).openEndDrawer();
-              _showMobileMenu(context);
-            },
+          Row(
+            children: [
+              // Add theme toggle button
+              const ThemeToggleButton(isInAppBar: true),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () {
+                  Scaffold.of(context).openEndDrawer();
+                  _showMobileMenu(context);
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -106,6 +117,12 @@ class _MobileNavBar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Add theme toggle button
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: ThemeToggleButton(showLabel: true),
+            ),
+            const Divider(),
             _MobileNavItem(
               title: 'Home',
               index: 0,

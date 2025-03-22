@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import '../../../viewmodels/theme_viewmodel.dart';
 
 class CodeAnimation extends StatefulWidget {
   const CodeAnimation({Key? key}) : super(key: key);
@@ -95,6 +97,8 @@ Widget build(BuildContext context) {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Provider.of<ThemeViewModel>(context).isDarkMode;
+    
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 500),
       opacity: _isActive ? 1.0 : 0.0,
@@ -102,7 +106,9 @@ Widget build(BuildContext context) {
         width: 400,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
+          color: isDarkMode 
+              ? Colors.black.withOpacity(0.7)
+              : Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -111,6 +117,12 @@ Widget build(BuildContext context) {
               spreadRadius: 5,
             ),
           ],
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.grey.shade800
+                : Colors.grey.shade300,
+            width: 1,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +159,9 @@ Widget build(BuildContext context) {
                 Text(
                   'code_sample.dart',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: isDarkMode 
+                        ? Colors.white.withOpacity(0.7) 
+                        : Colors.black.withOpacity(0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -156,7 +170,7 @@ Widget build(BuildContext context) {
             const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: _buildCodeText(_codeSnippets[_currentIndex]),
+              child: _buildCodeText(_codeSnippets[_currentIndex], isDarkMode),
             ),
           ],
         ),
@@ -164,7 +178,7 @@ Widget build(BuildContext context) {
     );
   }
 
-  Widget _buildCodeText(String code) {
+  Widget _buildCodeText(String code, bool isDarkMode) {
     // Add colored syntax highlighting
     final lines = code.split('\n');
     
@@ -173,14 +187,14 @@ Widget build(BuildContext context) {
       children: lines.map((line) {
         // Basic syntax highlighting
         if (line.contains('class ') || line.contains('void ') || line.contains('Future<') || line.contains('@override')) {
-          return _buildSyntaxLine(line, isKeyword: true);
+          return _buildSyntaxLine(line, isKeyword: true, isDarkMode: isDarkMode);
         } else if (line.contains('=') || line.contains('(') || line.contains(')') || line.contains('{') || line.contains('}')) {
-          return _buildSyntaxLine(line);
+          return _buildSyntaxLine(line, isDarkMode: isDarkMode);
         } else {
           return Text(
             line,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.black87,
               fontFamily: 'JetBrainsMono',
               fontSize: 14,
               height: 1.5,
@@ -191,7 +205,7 @@ Widget build(BuildContext context) {
     );
   }
 
-  Widget _buildSyntaxLine(String line, {bool isKeyword = false}) {
+  Widget _buildSyntaxLine(String line, {bool isKeyword = false, required bool isDarkMode}) {
     final keywords = ['class', 'void', 'final', 'const', 'var', 'for', 'if', 'else', 'await', 'async', 'required', 'return', 'Future', 'Widget', 'BuildContext', 'override'];
     final types = ['String', 'List', 'int', 'bool', 'double', 'Map', 'Set', 'Duration', 'Color', 'ThemeData'];
     
@@ -243,8 +257,8 @@ Widget build(BuildContext context) {
         parts.add(
           Text(
             formattedLine.substring(startIndex),
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.black87,
               fontFamily: 'JetBrainsMono',
               fontSize: 14,
               height: 1.5,
@@ -258,8 +272,8 @@ Widget build(BuildContext context) {
           parts.add(
             Text(
               formattedLine.substring(startIndex, nextTagStart),
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
                 fontFamily: 'JetBrainsMono',
                 fontSize: 14,
                 height: 1.5,
@@ -275,8 +289,8 @@ Widget build(BuildContext context) {
           parts.add(
             Text(
               content,
-              style: const TextStyle(
-                color: Color(0xFF569CD6), // Blue for keywords
+              style: TextStyle(
+                color: const Color(0xFF569CD6), // Blue for keywords
                 fontFamily: 'JetBrainsMono',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -291,8 +305,8 @@ Widget build(BuildContext context) {
           parts.add(
             Text(
               content,
-              style: const TextStyle(
-                color: Color(0xFF4EC9B0), // Teal for types
+              style: TextStyle(
+                color: const Color(0xFF4EC9B0), // Teal for types
                 fontFamily: 'JetBrainsMono',
                 fontSize: 14,
                 height: 1.5,
@@ -306,8 +320,8 @@ Widget build(BuildContext context) {
           parts.add(
             Text(
               content,
-              style: const TextStyle(
-                color: Color(0xFFCE9178), // Orange for strings
+              style: TextStyle(
+                color: const Color(0xFFCE9178), // Orange for strings
                 fontFamily: 'JetBrainsMono',
                 fontSize: 14,
                 height: 1.5,

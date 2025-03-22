@@ -2,24 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:portfolio_website/config/app_config.dart';
 
 class AppTheme {
-  static ThemeData get theme {
+  static ThemeData getTheme({bool isDarkMode = true}) {
     // Get theme configurations from AppConfig
     final config = AppConfig.themeConfig;
     
-    // Use dark theme or light theme based on configuration
-    final brightness = config.useDarkMode ? Brightness.dark : Brightness.light;
+    // Override dark mode setting if needed
+    final brightness = isDarkMode ? Brightness.dark : Brightness.light;
     
+    // Background and surface colors depend on the mode
+    final backgroundColor = isDarkMode 
+        ? Color(config.backgroundColor) 
+        : Colors.grey[50]!;
+    
+    final surfaceColor = isDarkMode 
+        ? Color(config.backgroundColor) 
+        : Colors.white;
+    
+    // Text colors depend on the mode
+    final textPrimaryColor = isDarkMode 
+        ? Color(config.textPrimaryColor) 
+        : Colors.grey[900]!;
+    
+    final textSecondaryColor = isDarkMode 
+        ? Color(config.textSecondaryColor) 
+        : Colors.grey[600]!;
+
     // Create color scheme from config colors
     final colorScheme = ColorScheme(
       primary: Color(config.primaryColor),
       secondary: Color(config.accentColor),
-      surface: Color(config.backgroundColor),
-      background: Color(config.backgroundColor),
+      surface: surfaceColor,
+      background: backgroundColor,
       error: Colors.red,
       onPrimary: Colors.white,
       onSecondary: Colors.white,
-      onSurface: Color(config.textPrimaryColor),
-      onBackground: Color(config.textPrimaryColor),
+      onSurface: textPrimaryColor,
+      onBackground: textPrimaryColor,
       onError: Colors.white,
       brightness: brightness,
     );
@@ -27,71 +45,71 @@ class AppTheme {
     // Create text theme
     final textTheme = TextTheme(
       displayLarge: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 57,
         fontWeight: FontWeight.bold,
         fontFamily: 'JetBrainsMono',
       ),
       displayMedium: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 45,
         fontWeight: FontWeight.bold,
         fontFamily: 'JetBrainsMono',
       ),
       displaySmall: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 36,
         fontWeight: FontWeight.bold,
         fontFamily: 'JetBrainsMono',
       ),
       headlineLarge: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 32,
         fontWeight: FontWeight.bold,
         fontFamily: 'JetBrainsMono',
       ),
       headlineMedium: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 28,
         fontWeight: FontWeight.bold,
         fontFamily: 'JetBrainsMono',
       ),
       headlineSmall: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 24,
         fontWeight: FontWeight.bold,
         fontFamily: 'JetBrainsMono',
       ),
       titleLarge: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 22,
         fontWeight: FontWeight.w600,
         fontFamily: 'JetBrainsMono',
       ),
       titleMedium: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         fontFamily: 'JetBrainsMono',
       ),
       titleSmall: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         fontFamily: 'JetBrainsMono',
       ),
       bodyLarge: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 16,
         fontFamily: 'Roboto',
       ),
       bodyMedium: TextStyle(
-        color: Color(config.textPrimaryColor),
+        color: textPrimaryColor,
         fontSize: 14,
         fontFamily: 'Roboto',
       ),
       bodySmall: TextStyle(
-        color: Color(config.textSecondaryColor),
+        color: textSecondaryColor,
         fontSize: 12,
         fontFamily: 'Roboto',
       ),
@@ -103,13 +121,15 @@ class AppTheme {
       colorScheme: colorScheme,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: Color(config.backgroundColor),
-        foregroundColor: Color(config.textPrimaryColor),
+        backgroundColor: surfaceColor,
+        foregroundColor: textPrimaryColor,
         elevation: 0,
       ),
-      scaffoldBackgroundColor: Color(config.backgroundColor),
+      scaffoldBackgroundColor: backgroundColor,
       cardTheme: CardTheme(
-        color: Color(config.backgroundColor).withOpacity(0.7),
+        color: isDarkMode 
+            ? Color(config.backgroundColor).withOpacity(0.7) 
+            : Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -137,12 +157,12 @@ class AppTheme {
         size: 24,
       ),
       dividerTheme: DividerThemeData(
-        color: Color(config.textSecondaryColor).withOpacity(0.2),
+        color: textSecondaryColor.withOpacity(0.2),
         thickness: 1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Color(config.backgroundColor).withOpacity(0.3),
+        fillColor: backgroundColor.withOpacity(0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Color(config.primaryColor)),
@@ -155,30 +175,45 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Color(config.primaryColor)),
         ),
-        labelStyle: TextStyle(color: Color(config.textSecondaryColor)),
-        hintStyle: TextStyle(color: Color(config.textSecondaryColor).withOpacity(0.5)),
+        labelStyle: TextStyle(color: textSecondaryColor),
+        hintStyle: TextStyle(color: textSecondaryColor.withOpacity(0.5)),
       ),
     );
   }
 
-  // Developer-focused custom gradient backgrounds
-  static LinearGradient get primaryGradient => LinearGradient(
-    colors: [
-      Color(AppConfig.themeConfig.primaryColor),
-      Color(AppConfig.themeConfig.accentColor),
-    ],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  // For backward compatibility
+  static ThemeData get theme => getTheme(isDarkMode: AppConfig.themeConfig.useDarkMode);
 
-  static LinearGradient get darkGradient => LinearGradient(
-    colors: [
-      Color(AppConfig.themeConfig.backgroundColor),
-      Color(AppConfig.themeConfig.backgroundColor).withOpacity(0.8),
-    ],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
+  // Background gradients
+  static LinearGradient getPrimaryGradient({bool isDarkMode = true}) {
+    return LinearGradient(
+      colors: [
+        Color(AppConfig.themeConfig.primaryColor),
+        Color(AppConfig.themeConfig.accentColor),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient getBackgroundGradient({bool isDarkMode = true}) {
+    final backgroundColor = isDarkMode 
+        ? Color(AppConfig.themeConfig.backgroundColor)
+        : Colors.grey[50]!;
+    
+    return LinearGradient(
+      colors: [
+        backgroundColor,
+        backgroundColor.withOpacity(0.8),
+      ],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+  }
+
+  // For backward compatibility
+  static LinearGradient get primaryGradient => getPrimaryGradient();
+  static LinearGradient get darkGradient => getBackgroundGradient();
 
   // Code syntax highlighting colors (for code snippets if needed)
   static const Map<String, Color> syntaxHighlightColors = {
