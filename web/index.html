@@ -1,38 +1,208 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Professional mobile app developer portfolio">
 
   <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="mro_portfolio_web">
+  <meta name="apple-mobile-web-app-title" content="Mohamed Reda Oumahdi">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>mro_portfolio_web</title>
+  <title>Mohamed Reda Oumahdi - Mobile App Developer</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    var serviceWorkerVersion = "{{flutter_service_worker_version}}";
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- Loading Indicator -->
+  <div id="loading">
+    <style>
+      body {
+        background-color: #121212;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      #loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+        position: fixed;
+        background-color: #121212;
+        z-index: 9999;
+        transition: opacity 0.4s ease-out;
+      }
+      .logo {
+        width: 80px;
+        height: 80px;
+        background-color: #4A00E0;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: monospace;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 24px;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-left-color: #4A00E0;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .loading-text {
+        margin-top: 16px;
+        color: #BDBDBD;
+        font-family: sans-serif;
+        font-size: 14px;
+      }
+      #error-message {
+        display: none;
+        margin-top: 16px;
+        color: #ff5252;
+        font-family: sans-serif;
+        font-size: 14px;
+        text-align: center;
+        max-width: 80%;
+      }
+      #retry-button {
+        display: none;
+        margin-top: 16px;
+        padding: 8px 16px;
+        background-color: #4A00E0;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-family: sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+      }
+    </style>
+    <div class="logo">&lt;/&gt;</div>
+    <div class="spinner"></div>
+    <div class="loading-text">Loading portfolio...</div>
+    <div id="error-message"></div>
+    <button id="retry-button" onclick="window.location.reload()">Retry</button>
+  </div>
+
+  <script>
+    // Define a timeout to show error message if app doesn't load
+    const loadTimeout = setTimeout(() => {
+      const errorMessage = document.getElementById('error-message');
+      const retryButton = document.getElementById('retry-button');
+      
+      if (errorMessage && retryButton) {
+        errorMessage.style.display = 'block';
+        errorMessage.innerText = 'It seems to be taking longer than expected. There might be an issue loading the app.';
+        retryButton.style.display = 'block';
+      }
+    }, 10000); // 10 seconds timeout
+    
+    window.addEventListener('load', function() {
+      // Detect older browsers that might not support features needed
+      var flutterInAppWebView = navigator.userAgent.includes('Flutter WebView');
+      
+      function loadMainDartJs() {
+        if (flutterInAppWebView) {
+          // For Flutter InAppWebView
+          _flutter.loader.loadEntrypoint({
+            entrypointUrl: "main.dart.js",
+            onEntrypointLoaded: (engineInitializer) => {
+              engineInitializer.initializeEngine().then((appRunner) => {
+                appRunner.runApp();
+              });
+            }
+          });
+        } else {
+          // For regular web
+          _flutter.loader.loadEntrypoint({
+            serviceWorker: {
+              serviceWorkerVersion: serviceWorkerVersion,
+            },
+            onEntrypointLoaded: (engineInitializer) => {
+              engineInitializer.initializeEngine().then((appRunner) => {
+                appRunner.runApp();
+              }).catch(error => {
+                console.error('Failed to initialize engine', error);
+                showError('Failed to initialize the app: ' + error);
+              });
+            }
+          });
+        }
+      }
+      
+      function showError(message) {
+        const errorMessage = document.getElementById('error-message');
+        const retryButton = document.getElementById('retry-button');
+        const spinner = document.querySelector('.spinner');
+        const loadingText = document.querySelector('.loading-text');
+        
+        if (spinner) spinner.style.display = 'none';
+        if (loadingText) loadingText.style.display = 'none';
+        if (errorMessage) {
+          errorMessage.style.display = 'block';
+          errorMessage.innerText = message;
+        }
+        if (retryButton) retryButton.style.display = 'block';
+      }
+
+      try {
+        if (!document.querySelector('flutter-loader')) {
+          var scriptTag = document.createElement('script');
+          scriptTag.src = 'main.dart.js';
+          scriptTag.type = 'application/javascript';
+          document.body.append(scriptTag);
+        } else {
+          loadMainDartJs();
+        }
+      } catch (e) {
+        console.error('Exception while loading app', e);
+        showError('Error loading the app: ' + e);
+      }
+
+      // Listen for first frame render
+      window.addEventListener('flutter-first-frame', function() {
+        clearTimeout(loadTimeout); // Clear the timeout since app loaded successfully
+        const loadingIndicator = document.getElementById('loading');
+        if (loadingIndicator) {
+          loadingIndicator.style.opacity = '0';
+          setTimeout(function() {
+            loadingIndicator.remove();
+          }, 400);
+        }
+      });
+    });
+
+    // If nothing happens after 20 seconds, reload the page
+    setTimeout(() => {
+      if (document.getElementById('loading')) {
+        console.log('App loading timeout, reloading...');
+        window.location.reload();
+      }
+    }, 20000);
+  </script>
 </body>
 </html>

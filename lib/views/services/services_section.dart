@@ -1,9 +1,11 @@
+// lib/views/services/services_section.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../viewmodels/service_viewmodel.dart';
 import '../../widgets/responsive_wrapper.dart';
+import '../../widgets/skeleton_loaders/service_skeleton.dart';
 import 'widgets/service_card.dart';
 
 class ServicesSection extends StatelessWidget {
@@ -46,16 +48,60 @@ class ServicesSection extends StatelessWidget {
             Consumer<ServiceViewModel>(
               builder: (context, viewModel, child) {
                 if (viewModel.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return _buildSkeletonGrid(context);
                 }
                 
                 if (viewModel.errorMessage != null) {
                   return Center(
-                    child: Text(
-                      viewModel.errorMessage!,
-                      style: TextStyle(color: Colors.red),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Failed to load services',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          viewModel.errorMessage!,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.red.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => viewModel.loadServices(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Try Again'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                if (viewModel.services.isEmpty) {
+                  return Center(
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.design_services,
+                          color: Colors.grey,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No services available',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -66,6 +112,62 @@ class ServicesSection extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+  
+  Widget _buildSkeletonGrid(BuildContext context) {
+    return ResponsiveWrapper(
+      mobile: _buildSkeletonList(context),
+      tablet: _buildSkeletonGrid2Columns(context),
+      desktop: _buildSkeletonGrid4Columns(context),
+    );
+  }
+  
+  Widget _buildSkeletonList(BuildContext context) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: ServiceSkeleton(),
+        );
+      },
+    );
+  }
+  
+  Widget _buildSkeletonGrid2Columns(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.5,
+      ),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return ServiceSkeleton();
+      },
+    );
+  }
+  
+  Widget _buildSkeletonGrid4Columns(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.0,
+      ),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return ServiceSkeleton();
+      },
     );
   }
   

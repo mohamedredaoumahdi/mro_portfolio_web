@@ -18,6 +18,23 @@ dependencies:
   youtube_player_iframe: ^4.0.4
   flutter_staggered_animations: ^1.1.1
   universal_html: ^2.2.4
+  
+  # Firebase (Compatible versions)
+  firebase_core: ^2.17.0
+  cloud_firestore: ^4.9.0
+  firebase_analytics: ^10.5.0
+  # Removing firebase_storage to fix the issue
+  # We'll implement a different approach for image storage
+  
+  # Image loading
+  cached_network_image: ^3.3.1
+  flutter_cache_manager: ^3.3.1
+  
+  # Form validation
+  email_validator: ^2.1.17
+  
+  # SEO
+  seo_renderer: ^0.6.0
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,7 @@
+// lib/views/projects/widgets/project_card.dart
 import 'package:flutter/material.dart';
 import '../../../models/project_model.dart';
+import '../../../widgets/progressive_image.dart';
 
 class ProjectCard extends StatefulWidget {
   final Project project;
@@ -57,23 +59,25 @@ class _ProjectCardState extends State<ProjectCard> {
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16),
                     ),
-                    child: Image.network(
-                      widget.project.youtubeThumbnail,
+                    child: ProgressiveImage(
+                      imageUrl: widget.project.youtubeThumbnail,
                       width: double.infinity,
                       height: 180,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: double.infinity,
-                          height: 180,
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          child: Icon(
-                            Icons.image,
-                            size: 40,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        );
-                      },
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                      errorWidget: Container(
+                        width: double.infinity,
+                        height: 180,
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        child: Icon(
+                          Icons.image,
+                          size: 40,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                     ),
                   ),
                   Positioned.fill(

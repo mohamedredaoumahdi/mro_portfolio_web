@@ -1,9 +1,11 @@
+// lib/views/projects/projects_section.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../viewmodels/project_viewmodel.dart';
 import '../../widgets/responsive_wrapper.dart';
+import '../../widgets/skeleton_loaders/project_skeleton.dart';
 import 'widgets/project_card.dart';
 import 'widgets/project_detail_dialog.dart';
 
@@ -44,16 +46,60 @@ class ProjectsSection extends StatelessWidget {
             Consumer<ProjectViewModel>(
               builder: (context, viewModel, child) {
                 if (viewModel.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return _buildSkeletonGrid(context);
                 }
                 
                 if (viewModel.errorMessage != null) {
                   return Center(
-                    child: Text(
-                      viewModel.errorMessage!,
-                      style: TextStyle(color: Colors.red),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Failed to load projects',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          viewModel.errorMessage!,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.red.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => viewModel.loadProjects(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Try Again'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                if (viewModel.projects.isEmpty) {
+                  return Center(
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.folder_open,
+                          color: Colors.grey,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No projects available',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -64,6 +110,62 @@ class ProjectsSection extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+  
+  Widget _buildSkeletonGrid(BuildContext context) {
+    return ResponsiveWrapper(
+      mobile: _buildSkeletonList(context),
+      tablet: _buildSkeletonGrid2Columns(context),
+      desktop: _buildSkeletonGrid3Columns(context),
+    );
+  }
+  
+  Widget _buildSkeletonList(BuildContext context) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: ProjectSkeleton(),
+        );
+      },
+    );
+  }
+  
+  Widget _buildSkeletonGrid2Columns(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 24,
+        mainAxisSpacing: 24,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return ProjectSkeleton();
+      },
+    );
+  }
+  
+  Widget _buildSkeletonGrid3Columns(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 24,
+        mainAxisSpacing: 24,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        return ProjectSkeleton();
+      },
     );
   }
   
