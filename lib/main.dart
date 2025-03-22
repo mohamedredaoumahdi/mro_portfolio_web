@@ -13,7 +13,9 @@ import 'viewmodels/project_viewmodel.dart';
 import 'viewmodels/service_viewmodel.dart';
 import 'viewmodels/contact_viewmodel.dart';
 import 'viewmodels/theme_viewmodel.dart';
+import 'services/auth_service.dart';
 import 'views/home/home_screen.dart';
+import 'routes/admin_routes.dart';
 
 // Flag to track whether we're using Firebase
 bool useFirebase = false;
@@ -106,6 +108,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ServiceViewModel()),
         ChangeNotifierProvider(create: (_) => ContactViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
+        ChangeNotifierProvider(create: (_) => AuthService()),
       ],
       child: Consumer<ThemeViewModel>(
         builder: (context, themeViewModel, _) {
@@ -113,7 +116,11 @@ class MyApp extends StatelessWidget {
             title: 'Mohamed Reda Oumahdi - Mobile App Developer',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.getTheme(isDarkMode: themeViewModel.isDarkMode),
-            home: const HomeScreen(),
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const HomeScreen(),
+              ...AdminRoutes.getRoutes(),
+            },
           );
         },
       ),
