@@ -35,7 +35,10 @@ class _ProjectCardState extends State<ProjectCard> {
             boxShadow: _isHovered
                 ? [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     )
@@ -62,7 +65,7 @@ class _ProjectCardState extends State<ProjectCard> {
                     child: ProgressiveImage(
                       imageUrl: widget.project.youtubeThumbnail,
                       width: double.infinity,
-                      height: 180,
+                      height: 200,
                       fit: BoxFit.cover,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
@@ -71,7 +74,10 @@ class _ProjectCardState extends State<ProjectCard> {
                       errorWidget: Container(
                         width: double.infinity,
                         height: 180,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.1),
                         child: Icon(
                           Icons.image,
                           size: 40,
@@ -111,7 +117,7 @@ class _ProjectCardState extends State<ProjectCard> {
                   ),
                 ],
               ),
-              
+
               // Project Details
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -121,8 +127,8 @@ class _ProjectCardState extends State<ProjectCard> {
                     Text(
                       widget.project.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -130,8 +136,11 @@ class _ProjectCardState extends State<ProjectCard> {
                     Text(
                       widget.project.description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      ),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.7),
+                          ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -139,21 +148,44 @@ class _ProjectCardState extends State<ProjectCard> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: widget.project.technologies.map((tech) {
-                        return Chip(
-                          label: Text(
-                            tech,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onPrimary,
+                      children: [
+                        ...widget.project.technologies.take(5).map((tech) {
+                          return Chip(
+                            label: Text(
+                              tech,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
                             ),
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            padding: EdgeInsets.zero,
+                            labelPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 0),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          );
+                        }).toList(),
+                        if (widget.project.technologies.length > 5)
+                          Chip(
+                            label: Text(
+                              "...",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .secondary, // You can change this color
+                            padding: EdgeInsets.zero,
+                            labelPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 0),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          padding: EdgeInsets.zero,
-                          labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        );
-                      }).toList(),
+                      ],
                     ),
                   ],
                 ),

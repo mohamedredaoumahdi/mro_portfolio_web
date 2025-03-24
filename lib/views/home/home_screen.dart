@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:portfolio_website/config/app_config.dart';
+import 'package:portfolio_website/viewmodels/profile_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -29,6 +30,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Force profile data refresh after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+        profileViewModel.loadPersonalInfo();
+        print("FORCE REFRESH: Explicitly loading profile data in initState");
+      }
+    });
   }
 
   @override
@@ -55,6 +65,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDarkMode = themeViewModel.isDarkMode;
     
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Manual refresh button for testing
+          Provider.of<ProfileViewModel>(context, listen: false).loadPersonalInfo();
+          setState(() {}); // Force UI update
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Refreshing profile data...'))
+          );
+        },
+        child: const Icon(Icons.refresh),
+      ),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -151,77 +172,86 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroContent(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '< Hello World />',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          "I'm ${AppConfig.name},",
-          style: context.responsive<TextStyle>(
-            mobile: Theme.of(context).textTheme.displaySmall!,
-            tablet: Theme.of(context).textTheme.displayMedium!,
-            desktop: Theme.of(context).textTheme.displayLarge!,
-          ),
-        ),
-        const SizedBox(height: 10),
-        AnimatedTextKit(
-          animatedTexts: [
-            TypewriterAnimatedText(
-              AppConfig.title,
-              textStyle: context.responsive<TextStyle>(
-                mobile: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                    color: Theme.of(context).colorScheme.secondary),
-                tablet: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                    color: Theme.of(context).colorScheme.secondary),
-                desktop: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                    color: Theme.of(context).colorScheme.secondary),
+    return Consumer<ProfileViewModel>(
+      builder: (context, profileViewModel, _) {
+        // Debug print to verify data
+        print("HERO CONTENT BUILD: Using title '${profileViewModel.title}'");
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '< Hello World />',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
               ),
-              speed: const Duration(milliseconds: 100),
             ),
+            const SizedBox(height: 20),
+            Text(
+              "I'm ${profileViewModel.name}",
+              style: context.responsive<TextStyle>(
+                mobile: Theme.of(context).textTheme.displaySmall!,
+                tablet: Theme.of(context).textTheme.displayMedium!,
+                desktop: Theme.of(context).textTheme.displayLarge!,
+              ),
+            ),
+            const SizedBox(height: 10),
+            AnimatedTextKit(
+              key: ValueKey(profileViewModel.title),
+              animatedTexts: [
+                TypewriterAnimatedText(
+                  // Using profileViewModel.title directly
+                  profileViewModel.title, 
+                  textStyle: context.responsive<TextStyle>(
+                    mobile: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                        color: Theme.of(context).colorScheme.secondary),
+                    tablet: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.secondary),
+                    desktop: Theme.of(context).textTheme.headlineLarge!.copyWith(
+                        color: Theme.of(context).colorScheme.secondary),
+                  ),
+                  speed: const Duration(milliseconds: 100),
+                ),
+              ],
+              totalRepeatCount: 1,
+            ),
+            const SizedBox(height: 30),
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: context.responsive<double>(
+                  mobile: MediaQuery.of(context).size.width * 0.9,
+                  tablet: 550,
+                  desktop: 650,
+                ),
+              ),
+              child: Text(
+                profileViewModel.aboutMe,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () => _scrollToSection(3), // Scroll to contact section
+              child: const Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                child: Text(
+                  "Get in Touch",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            if (context.isMobile) const SizedBox(height: 30),
           ],
-          totalRepeatCount: 1,
-        ),
-        const SizedBox(height: 30),
-        Container(
-          constraints: BoxConstraints(
-            maxWidth: context.responsive<double>(
-              mobile: MediaQuery.of(context).size.width * 0.9,
-              tablet: 550,
-              desktop: 650,
-            ),
-          ),
-          child: Text(
-            AppConfig.aboutMe,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-        const SizedBox(height: 40),
-        ElevatedButton(
-          onPressed: () => _scrollToSection(3), // Scroll to contact section
-          child: const Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 12,
-            ),
-            child: Text(
-              "Get in Touch",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-        if (context.isMobile) const SizedBox(height: 30),
-      ],
+        );
+      },
     );
   }
 }

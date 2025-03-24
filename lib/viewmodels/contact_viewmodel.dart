@@ -1,6 +1,7 @@
 // lib/viewmodels/contact_viewmodel.dart
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:portfolio_website/services/activity_service.dart';
 import 'package:portfolio_website/services/firebase_service.dart';
 
 class ContactViewModel extends ChangeNotifier {
@@ -74,6 +75,10 @@ class ContactViewModel extends ChangeNotifier {
           _isSubmitting = false;
           if (result) {
             _submissionSuccess = true;
+            // Log activity for the contact submission
+            final activityService = ActivityService.instance;
+            final docId = 'contact_${DateTime.now().millisecondsSinceEpoch}';
+            await activityService.logContactSubmission(docId, name);
             notifyListeners();
             return true;
           } else {

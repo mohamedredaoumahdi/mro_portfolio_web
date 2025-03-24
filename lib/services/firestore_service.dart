@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:portfolio_website/models/project_model.dart';
 
 class FirestoreService {
+  static final FirestoreService _instance = FirestoreService._internal();
+  static FirestoreService get instance => _instance;
+  
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // Collection references
@@ -14,15 +17,21 @@ class FirestoreService {
       FirebaseFirestore.instance.collection('config');
   final CollectionReference _analyticsCollection = 
       FirebaseFirestore.instance.collection('analytics');
+  final CollectionReference _contactSubmissionsCollection = 
+      FirebaseFirestore.instance.collection('contact_submissions');
+  
+  FirestoreService._internal();
   
   // =================== Projects Management ===================
   
   // Get all projects
   Future<List<Project>> getProjects() async {
     try {
+      print('Fetching projects from Firestore...');
       final QuerySnapshot snapshot = 
           await _projectsCollection.orderBy('order', descending: false).get();
       
+      print('Retrieved ${snapshot.docs.length} projects from Firestore');
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         
@@ -34,8 +43,8 @@ class FirestoreService {
           youtubeVideoId: data['youtubeVideoId'] ?? '',
           thumbnailUrl: data['thumbnailUrl'] ?? 
               'https://img.youtube.com/vi/${data['youtubeVideoId'] ?? ''}/hqdefault.jpg',
-          date: data['date'] != null ? 
-              DateTime.parse(data['date']) : 
+          date: data['createdAt'] != null ? 
+              (data['createdAt'] as Timestamp).toDate() : 
               DateTime.now(),
         );
       }).toList();
@@ -46,8 +55,9 @@ class FirestoreService {
   }
   
   // Add a new project
-  Future<void> addProject(Map<String, dynamic> projectData) async {
+  Future<DocumentReference> addProject(Map<String, dynamic> projectData) async {
     try {
+      print('Adding new project: ${projectData['title']}');
       // Get the current number of projects for ordering
       final QuerySnapshot snapshot = await _projectsCollection.get();
       final int order = snapshot.size; // New project will be at the end
@@ -59,7 +69,11 @@ class FirestoreService {
       projectData['createdAt'] = FieldValue.serverTimestamp();
       projectData['updatedAt'] = FieldValue.serverTimestamp();
       
-      await _projectsCollection.add(projectData);
+      // Add the document and return the reference
+      final docRef = await _projectsCollection.add(projectData);
+      print('Project added successfully');
+      return docRef;
+      
     } catch (e) {
       print('Error adding project: $e');
       rethrow;
@@ -69,10 +83,12 @@ class FirestoreService {
   // Update an existing project
   Future<void> updateProject(String projectId, Map<String, dynamic> projectData) async {
     try {
+      print('Updating project: $projectId');
       // Add update timestamp
       projectData['updatedAt'] = FieldValue.serverTimestamp();
       
       await _projectsCollection.doc(projectId).update(projectData);
+      print('Project updated successfully');
     } catch (e) {
       print('Error updating project: $e');
       rethrow;
@@ -82,10 +98,12 @@ class FirestoreService {
   // Delete a project
   Future<void> deleteProject(String projectId) async {
     try {
+      print('Deleting project: $projectId');
       await _projectsCollection.doc(projectId).delete();
       
       // Re-order remaining projects
       await _updateProjectsOrder();
+      print('Project deleted successfully');
     } catch (e) {
       print('Error deleting project: $e');
       rethrow;
@@ -95,6 +113,7 @@ class FirestoreService {
   // Reorder projects
   Future<void> reorderProjects(int oldIndex, int newIndex) async {
     try {
+      print('Reordering projects from $oldIndex to $newIndex');
       // Get all projects ordered by current order
       final QuerySnapshot snapshot = 
           await _projectsCollection.orderBy('order', descending: false).get();
@@ -138,6 +157,7 @@ class FirestoreService {
       }
       
       await batch.commit();
+      print('Projects reordered successfully');
     } catch (e) {
       print('Error reordering projects: $e');
       rethrow;
@@ -164,6 +184,7 @@ class FirestoreService {
       }
       
       await batch.commit();
+      print('Project order updated successfully');
     } catch (e) {
       print('Error updating project order: $e');
       rethrow;
@@ -175,9 +196,11 @@ class FirestoreService {
   // Get all services
   Future<List<Service>> getServices() async {
     try {
+      print('Fetching services from Firestore...');
       final QuerySnapshot snapshot = 
           await _servicesCollection.orderBy('order', descending: false).get();
       
+      print('Retrieved ${snapshot.docs.length} services from Firestore');
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         
@@ -195,8 +218,9 @@ class FirestoreService {
   }
   
   // Add a new service
-  Future<void> addService(Map<String, dynamic> serviceData) async {
+  Future<DocumentReference> addService(Map<String, dynamic> serviceData) async {
     try {
+      print('Adding new service: ${serviceData['title']}');
       // Get the current number of services for ordering
       final QuerySnapshot snapshot = await _servicesCollection.get();
       final int order = snapshot.size; // New service will be at the end
@@ -207,8 +231,11 @@ class FirestoreService {
       // Add creation timestamp
       serviceData['createdAt'] = FieldValue.serverTimestamp();
       serviceData['updatedAt'] = FieldValue.serverTimestamp();
+
+      final docRef = await _servicesCollection.add(serviceData);
+      print('Service added successfully');
+      return docRef;
       
-      await _servicesCollection.add(serviceData);
     } catch (e) {
       print('Error adding service: $e');
       rethrow;
@@ -218,10 +245,12 @@ class FirestoreService {
   // Update an existing service
   Future<void> updateService(String serviceId, Map<String, dynamic> serviceData) async {
     try {
+      print('Updating service: $serviceId');
       // Add update timestamp
       serviceData['updatedAt'] = FieldValue.serverTimestamp();
       
       await _servicesCollection.doc(serviceId).update(serviceData);
+      print('Service updated successfully');
     } catch (e) {
       print('Error updating service: $e');
       rethrow;
@@ -231,10 +260,13 @@ class FirestoreService {
   // Delete a service
   Future<void> deleteService(String serviceId) async {
     try {
+      print('Deleting service: $serviceId');
       await _servicesCollection.doc(serviceId).delete();
       
       // Re-order remaining services
       await _updateServicesOrder();
+      print('Service deleted successfully');
+
     } catch (e) {
       print('Error deleting service: $e');
       rethrow;
@@ -261,6 +293,7 @@ class FirestoreService {
       }
       
       await batch.commit();
+      print('Service order updated successfully');
     } catch (e) {
       print('Error updating service order: $e');
       rethrow;
@@ -272,16 +305,20 @@ class FirestoreService {
   // Get personal information
   Future<Map<String, dynamic>> getPersonalInfo() async {
     try {
+      print('Fetching personal info from Firestore...');
       final DocumentSnapshot doc = 
           await _configCollection.doc('personal_info').get();
       
       if (doc.exists) {
-        return doc.data() as Map<String, dynamic>;
+        final data = doc.data() as Map<String, dynamic>;
+        print('Successfully loaded personal info from Firestore: ${data['title']}');
+        return data;
       }
       
+      print('No personal_info document found in Firestore');
       return {};
     } catch (e) {
-      print('Error fetching personal info: $e');
+      print('Error fetching personal info from Firestore: $e');
       rethrow;
     }
   }
@@ -289,6 +326,7 @@ class FirestoreService {
   // Update personal information
   Future<void> updatePersonalInfo(Map<String, dynamic> personalData) async {
     try {
+      print('Updating personal info in Firestore...');
       // Add update timestamp
       personalData['updatedAt'] = FieldValue.serverTimestamp();
       
@@ -296,6 +334,7 @@ class FirestoreService {
         personalData, 
         SetOptions(merge: true)
       );
+      print('Personal info updated successfully');
     } catch (e) {
       print('Error updating personal info: $e');
       rethrow;
@@ -305,6 +344,7 @@ class FirestoreService {
   // Get social links
   Future<Map<String, dynamic>> getSocialLinks() async {
     try {
+      print('Fetching social links from Firestore...');
       final DocumentSnapshot doc = 
           await _configCollection.doc('social_links').get();
       
@@ -312,6 +352,7 @@ class FirestoreService {
         return doc.data() as Map<String, dynamic>;
       }
       
+      print('No social_links document found in Firestore');
       return {};
     } catch (e) {
       print('Error fetching social links: $e');
@@ -322,6 +363,7 @@ class FirestoreService {
   // Update social links
   Future<void> updateSocialLinks(Map<String, dynamic> socialData) async {
     try {
+      print('Updating social links in Firestore...');
       // Add update timestamp
       socialData['updatedAt'] = FieldValue.serverTimestamp();
       
@@ -329,9 +371,48 @@ class FirestoreService {
         socialData, 
         SetOptions(merge: true)
       );
+      print('Social links updated successfully');
     } catch (e) {
       print('Error updating social links: $e');
       rethrow;
+    }
+  }
+  
+  // =================== Contact Form Submissions ===================
+  
+  // Submit contact form
+  Future<bool> submitContactForm(Map<String, dynamic> formData) async {
+    try {
+      print('Submitting contact form to Firestore...');
+      await _contactSubmissionsCollection.add({
+        ...formData,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      print('Contact form submitted successfully');
+      return true;
+    } catch (e) {
+      print('Error submitting contact form: $e');
+      return false;
+    }
+  }
+  
+  // Get contact submissions (for admin view)
+  Future<List<Map<String, dynamic>>> getContactSubmissions() async {
+    try {
+      print('Fetching contact submissions from Firestore...');
+      final QuerySnapshot snapshot = 
+          await _contactSubmissionsCollection.orderBy('timestamp', descending: true).get();
+      
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return {
+          'id': doc.id,
+          ...data,
+        };
+      }).toList();
+    } catch (e) {
+      print('Error fetching contact submissions: $e');
+      return []; // Return empty list instead of throwing to avoid dashboard errors
     }
   }
   
@@ -410,9 +491,10 @@ class FirestoreService {
   // Get analytics data
   Future<Map<String, dynamic>> getAnalyticsData() async {
     try {
+      print('Fetching analytics data from Firestore...');
       final pageVisitsDoc = await _analyticsCollection.doc('page_visits').get();
       final projectViewsDoc = await _analyticsCollection.doc('project_views').get();
-      final contactSubmissionsDoc = await _analyticsCollection.doc('contact_submissions').get();
+      final contactSubmissionsDoc = await _contactSubmissionsCollection.count().get();
       
       final Map<String, dynamic> analyticsData = {};
       
@@ -424,9 +506,7 @@ class FirestoreService {
         analyticsData['projectViews'] = projectViewsDoc.data();
       }
       
-      if (contactSubmissionsDoc.exists) {
-        analyticsData['contactSubmissions'] = contactSubmissionsDoc.data();
-      }
+      analyticsData['contactSubmissionsCount'] = contactSubmissionsDoc.count;
       
       return analyticsData;
     } catch (e) {

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:portfolio_website/config/app_config.dart';
+import 'package:portfolio_website/viewmodels/profile_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 import '../../widgets/responsive_wrapper.dart';
@@ -131,6 +132,7 @@ class ContactSection extends StatelessWidget {
   }
   
   Widget _buildContactInfo(BuildContext context) {
+    final profileViewModel = Provider.of<ProfileViewModel>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -143,21 +145,21 @@ class ContactSection extends StatelessWidget {
           context,
           Icons.email,
           'Email',
-          AppConfig.email,
+          profileViewModel.email,
         ),
         const SizedBox(height: 16),
         _buildContactItem(
           context,
           Icons.phone,
           'Phone',
-          AppConfig.phone,
+          profileViewModel.phone,
         ),
         const SizedBox(height: 16),
         _buildContactItem(
           context,
           Icons.location_on,
           'Location',
-          AppConfig.location,
+          profileViewModel.location,
         ),
       ],
     );

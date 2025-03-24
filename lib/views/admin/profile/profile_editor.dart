@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:portfolio_website/config/app_config.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
+import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({Key? key}) : super(key: key);
@@ -55,7 +57,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     
     try {
       // First try to load from Firestore
-      final firestoreService = FirestoreService();
+      final firestoreService = FirestoreService.instance;
       final personalInfo = await firestoreService.getPersonalInfo();
       
       if (personalInfo.isNotEmpty) {
@@ -124,9 +126,18 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       };
       
-      final firestoreService = FirestoreService();
+      final firestoreService = FirestoreService.instance;
       await firestoreService.updatePersonalInfo(personalInfo);
       
+      // Log the activity
+      final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+      await activityViewModel.logActivity(
+        type: 'edit',
+        message: 'You updated your personal profile information',
+        entityId: 'personal_info',
+        metadata: {'title': _titleController.text, 'name': _nameController.text},
+      );
+
       setState(() {
         _successMessage = 'Profile updated successfully!';
         _isSaving = false;

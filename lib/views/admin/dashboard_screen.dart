@@ -1,5 +1,12 @@
 // lib/views/admin/dashboard_screen.dart
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:portfolio_website/models/activity_model.dart';
+import 'package:portfolio_website/models/project_model.dart';
+import 'package:portfolio_website/services/firestore_service.dart';
+import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:portfolio_website/views/admin/social/social_links_manager.dart' show SocialLinksManagerScreen;
 import 'package:provider/provider.dart';
 import 'package:portfolio_website/services/auth_service.dart';
@@ -153,91 +160,353 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 }
 
 // Dashboard Overview Screen - keep as is
-class _DashboardOverview extends StatelessWidget {
+// Dashboard Overview with Real-time Activities
+class _DashboardOverview extends StatefulWidget {
   const _DashboardOverview();
 
   @override
+  State<_DashboardOverview> createState() => _DashboardOverviewState();
+}
+
+class _DashboardOverviewState extends State<_DashboardOverview> {
+  bool _isLoading = true;
+  Map<String, dynamic> _analyticsData = {};
+  List<Project> _projects = [];
+  String? _errorMessage;
+  late ActivityViewModel _activityViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _activityViewModel = ActivityViewModel();
+    _loadDashboardData();
+  }
+
+  @override
+  void dispose() {
+    _activityViewModel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      // Get services for dashboard stats
+      final firestoreService = FirestoreService.instance;
+      
+      // Get analytics data
+      final analyticsData = await firestoreService.getAnalyticsData();
+      
+      // Get projects for counts and latest activities
+      final projects = await firestoreService.getProjects();
+
+      // Update state with fetched data
+      setState(() {
+        _analyticsData = analyticsData;
+        _projects = projects;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading dashboard data: ${e.toString()}';
+        _isLoading = false;
+      });
+      print('Dashboard data error: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome to your Admin Dashboard',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Manage your portfolio content and view analytics',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'Error Loading Dashboard Data',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.red),
             ),
-          ),
-          const SizedBox(height: 32),
-          
-          // Quick statistics cards
-          GridView.count(
-            crossAxisCount: MediaQuery.of(context).size.width > 900 ? 4 : 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            const SizedBox(height: 8),
+            Text(_errorMessage!),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadDashboardData,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Extract values from analytics data for stats
+    final totalVisits = _analyticsData['pageVisits']?['totalVisits'] ?? 0;
+    final projectCount = _projects.length;
+    final contactSubmissionsCount = _analyticsData['contactSubmissionsCount'] ?? 0;
+    
+    final projectViewsData = _analyticsData['projectViews']?['projects'] as Map<String, dynamic>? ?? {};
+    final totalProjectViews = _analyticsData['projectViews']?['totalViews'] ?? 0;
+
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome to your Admin Dashboard',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Manage your portfolio content and view analytics',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 32),
+            
+            // Quick statistics cards
+            GridView.count(
+              crossAxisCount: MediaQuery.of(context).size.width > 900 ? 4 : 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildStatCard(
+                  context,
+                  icon: Icons.visibility,
+                  title: 'Total Views',
+                  value: totalVisits.toString(),
+                  trend: '',
+                  trendUp: true,
+                ),
+                _buildStatCard(
+                  context,
+                  icon: Icons.work,
+                  title: 'Projects',
+                  value: projectCount.toString(),
+                  trend: '',
+                  trendUp: true,
+                ),
+                _buildStatCard(
+                  context,
+                  icon: Icons.email,
+                  title: 'Messages',
+                  value: contactSubmissionsCount.toString(),
+                  trend: '',
+                  trendUp: true,
+                ),
+                _buildStatCard(
+                  context,
+                  icon: Icons.people,
+                  title: 'Project Views',
+                  value: totalProjectViews.toString(),
+                  trend: '',
+                  trendUp: true,
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Recent activity
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Activity',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                TextButton.icon(
+                  onPressed: () => _activityViewModel.loadActivities(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Consumer<ActivityViewModel>(
+              builder: (context, activityViewModel, child) {
+                if (activityViewModel.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (activityViewModel.errorMessage != null) {
+                  return Center(child: Text(activityViewModel.errorMessage!));
+                }
+                
+                final activities = activityViewModel.activities;
+                
+                if (activities.isEmpty) {
+                  return Card(
+                    elevation: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.info_outline, color: Colors.grey, size: 48),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No recent activities',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Activities will appear here as you interact with your portfolio',
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _addDemoActivity(),
+                              child: const Text('Add Demo Activity'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                
+                return Card(
+                  elevation: 1,
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: activities.length,
+                    separatorBuilder: (context, index) => const Divider(),
+                    itemBuilder: (context, index) {
+                      final activity = activities[index];
+                      IconData icon;
+                      Color iconColor;
+                      
+                      // Choose icon based on activity type
+                      switch (activity.type) {
+                        case 'view':
+                          icon = Icons.visibility;
+                          iconColor = Colors.blue;
+                          break;
+                        case 'contact':
+                          icon = Icons.email;
+                          iconColor = Colors.green;
+                          break;
+                        case 'edit':
+                          icon = Icons.edit;
+                          iconColor = Theme.of(context).colorScheme.primary;
+                          break;
+                        default:
+                          icon = Icons.notifications;
+                          iconColor = Colors.orange;
+                      }
+                      
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: iconColor.withOpacity(0.1),
+                          child: Icon(icon, color: iconColor),
+                        ),
+                        title: Text(activity.message),
+                        subtitle: Text(activity.timeAgo),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          // Navigate to detail page or show more info based on activity.entityId
+                          _showActivityDetails(context, activity);
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Quick actions
+            Text(
+              'Quick Actions',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            _buildQuickActions(context),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // Add a demo activity for testing
+  Future<void> _addDemoActivity() async {
+    final random = Random();
+    final types = ['view', 'edit', 'contact'];
+    final selectedType = types[random.nextInt(types.length)];
+    
+    String message;
+    String? entityId;
+    
+    if (selectedType == 'view' && _projects.isNotEmpty) {
+      final project = _projects[random.nextInt(_projects.length)];
+      message = 'Someone viewed your "${project.title}" project';
+      entityId = project.id;
+      await _activityViewModel.logProjectView(project.id, project.title);
+    } else if (selectedType == 'edit' && _projects.isNotEmpty) {
+      final project = _projects[random.nextInt(_projects.length)];
+      message = 'You updated the "${project.title}" project';
+      entityId = project.id;
+      await _activityViewModel.logProjectEdit(project.id, project.title);
+    } else {
+      message = 'New contact message received from "Demo User"';
+      entityId = 'demo_contact_${DateTime.now().millisecondsSinceEpoch}';
+      await _activityViewModel.logContactSubmission(entityId, 'Demo User');
+    }
+  }
+  
+  // Show activity details in a dialog
+  void _showActivityDetails(BuildContext context, Activity activity) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Activity Details'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _buildStatCard(
-                context,
-                icon: Icons.visibility,
-                title: 'Total Views',
-                value: '5,248',
-                trend: '+12%',
-                trendUp: true,
-              ),
-              _buildStatCard(
-                context,
-                icon: Icons.work,
-                title: 'Projects',
-                value: '8',
-                trend: '+1',
-                trendUp: true,
-              ),
-              _buildStatCard(
-                context,
-                icon: Icons.email,
-                title: 'Messages',
-                value: '24',
-                trend: '+3',
-                trendUp: true,
-              ),
-              _buildStatCard(
-                context,
-                icon: Icons.people,
-                title: 'Unique Visitors',
-                value: '1,856',
-                trend: '+8%',
-                trendUp: true,
-              ),
+              Text('Type: ${activity.type}'),
+              const SizedBox(height: 8),
+              Text('Message: ${activity.message}'),
+              const SizedBox(height: 8),
+              Text('Time: ${activity.timeAgo}'),
+              if (activity.entityId != null) ...[
+                const SizedBox(height: 8),
+                Text('Entity ID: ${activity.entityId}'),
+              ],
+              if (activity.metadata != null && activity.metadata!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text('Additional Information:'),
+                const SizedBox(height: 8),
+                ...activity.metadata!.entries.map(
+                  (entry) => Text('${entry.key}: ${entry.value}')
+                ),
+              ],
             ],
           ),
-          
-          const SizedBox(height: 32),
-          
-          // Recent activity
-          Text(
-            'Recent Activity',
-            style: Theme.of(context).textTheme.titleLarge,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
           ),
-          const SizedBox(height: 16),
-          _buildActivityList(context),
-          
-          const SizedBox(height: 32),
-          
-          // Quick actions
-          Text(
-            'Quick Actions',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          _buildQuickActions(context),
         ],
       ),
     );
@@ -266,31 +535,32 @@ class _DashboardOverview extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                   size: 28,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: trendUp ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        trendUp ? Icons.arrow_upward : Icons.arrow_downward,
-                        color: trendUp ? Colors.green : Colors.red,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        trend,
-                        style: TextStyle(
+                if (trend.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: trendUp ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          trendUp ? Icons.arrow_upward : Icons.arrow_downward,
                           color: trendUp ? Colors.green : Colors.red,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          size: 14,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          trend,
+                          style: TextStyle(
+                            color: trendUp ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -309,78 +579,6 @@ class _DashboardOverview extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-  
-  Widget _buildActivityList(BuildContext context) {
-    final activities = [
-      {
-        'type': 'view',
-        'message': 'Someone viewed your E-Commerce Mobile App project',
-        'time': '2 minutes ago',
-      },
-      {
-        'type': 'contact',
-        'message': 'New contact message received',
-        'time': '1 hour ago',
-      },
-      {
-        'type': 'edit',
-        'message': 'You updated the Food Delivery Application project',
-        'time': '3 hours ago',
-      },
-      {
-        'type': 'view',
-        'message': 'Someone viewed your Fitness Tracking App project',
-        'time': '5 hours ago',
-      },
-    ];
-    
-    return Card(
-      elevation: 1,
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: activities.length,
-        separatorBuilder: (context, index) => const Divider(),
-        itemBuilder: (context, index) {
-          final activity = activities[index];
-          IconData icon;
-          Color iconColor;
-          
-          // Choose icon based on activity type
-          switch (activity['type']) {
-            case 'view':
-              icon = Icons.visibility;
-              iconColor = Colors.blue;
-              break;
-            case 'contact':
-              icon = Icons.email;
-              iconColor = Colors.green;
-              break;
-            case 'edit':
-              icon = Icons.edit;
-              iconColor = Theme.of(context).colorScheme.primary;
-              break;
-            default:
-              icon = Icons.notifications;
-              iconColor = Colors.orange;
-          }
-          
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: iconColor.withOpacity(0.1),
-              child: Icon(icon, color: iconColor),
-            ),
-            title: Text(activity['message'] ?? ''),
-            subtitle: Text(activity['time'] ?? ''),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // Navigate to detail page or show more info
-            },
-          );
-        },
       ),
     );
   }

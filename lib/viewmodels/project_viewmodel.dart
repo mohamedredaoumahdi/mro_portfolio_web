@@ -1,17 +1,17 @@
 // lib/viewmodels/project_viewmodel.dart
+import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:portfolio_website/services/firebase_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/project_model.dart';
 import '../config/app_config.dart';
-
-// Import Firebase service conditionally
-import 'package:firebase_core/firebase_core.dart';
 
 class ProjectViewModel extends ChangeNotifier {
   List<Project> _projects = [];
   Project? _selectedProject;
   bool _isLoading = true;
   String? _errorMessage;
+  StreamSubscription<QuerySnapshot>? _subscription;
 
   // Getters
   List<Project> get projects => _projects;
@@ -29,6 +29,7 @@ class ProjectViewModel extends ChangeNotifier {
     try {
       return Firebase.apps.isNotEmpty;
     } catch (e) {
+      print('Firebase availability check error: $e');
       return false;
     }
   }
@@ -41,38 +42,87 @@ class ProjectViewModel extends ChangeNotifier {
       
       // Simulate network delay in debug mode
       if (kDebugMode) {
-        await Future.delayed(const Duration(milliseconds: 800));
+        await Future.delayed(const Duration(milliseconds: 500));
       }
 
       // Use Firebase if available
       if (_isFirebaseAvailable) {
         try {
-          // Try to load from Firebase with a timeout
-          _projects = await FirebaseService.instance.getProjects().timeout(const Duration(seconds: 5));
+          // Set up real-time listener for projects
+          _setupRealTimeListener();
+          return; // Early return as listener will handle updates
         } catch (e) {
-          print('Error loading from Firebase: $e - Falling back to local config');
-          // Firebase timed out or had an error - fall back to local config
-          _projects = [];
+          print('Error setting up Firestore listener: $e - Falling back to local config');
+          // Firebase error - fall back to local config
+          _loadFromAppConfig();
         }
-      }
-      
-      // If no projects loaded from Firebase, use fallback from config
-      if (_projects.isEmpty) {
-        final projectsList = AppConfig.projects;
-        _projects = List.generate(
-          projectsList.length,
-          (index) => Project.fromConfig(index, projectsList[index]),
-        );
+      } else {
+        // Firebase not available - use local config
+        _loadFromAppConfig();
+        print('Firebase not available, using AppConfig fallback');
       }
 
       _isLoading = false;
-      _errorMessage = null;
       notifyListeners();
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load projects: ${e.toString()}';
       notifyListeners();
+      print('Error in ProjectViewModel: $_errorMessage');
     }
+  }
+
+  // Set up real-time listener for projects collection
+  void _setupRealTimeListener() {
+    print('Setting up real-time listener for projects...');
+    
+    // Cancel existing subscription if any
+    _subscription?.cancel();
+    
+    // Set up listener
+    _subscription = FirebaseFirestore.instance
+        .collection('projects')
+        .orderBy('order')
+        .snapshots()
+        .listen((snapshot) {
+          print('Real-time update for projects: ${snapshot.docs.length} items');
+          
+          final List<Project> updatedProjects = snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Project(
+              id: doc.id,
+              title: data['title'] ?? '',
+              description: data['description'] ?? '',
+              technologies: List<String>.from(data['technologies'] ?? []),
+              youtubeVideoId: data['youtubeVideoId'] ?? '',
+              thumbnailUrl: data['thumbnailUrl'] ?? '',
+              date: data['createdAt'] != null 
+                  ? (data['createdAt'] as Timestamp).toDate() 
+                  : DateTime.now(),
+            );
+          }).toList();
+          
+          _projects = updatedProjects;
+          _isLoading = false;
+          _errorMessage = null;
+          notifyListeners();
+        }, onError: (e) {
+          print('Error in real-time listener: $e');
+          _errorMessage = 'Error loading projects: $e';
+          _loadFromAppConfig();
+          _isLoading = false;
+          notifyListeners();
+        });
+  }
+  
+  // Load data from AppConfig as fallback
+  void _loadFromAppConfig() {
+    print('Loading projects from AppConfig fallback');
+    final projectsList = AppConfig.projects;
+    _projects = List.generate(
+      projectsList.length,
+      (index) => Project.fromConfig(index, projectsList[index]),
+    );
   }
 
   // Select a project
@@ -92,5 +142,12 @@ class ProjectViewModel extends ChangeNotifier {
     return _projects.where((project) => 
       project.technologies.contains(technology)
     ).toList();
+  }
+  
+  @override
+  void dispose() {
+    // Cancel subscription when viewmodel is disposed
+    _subscription?.cancel();
+    super.dispose();
   }
 }

@@ -41,7 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
   // Check Firebase connection
   Future<void> _checkFirebaseConnection() async {
     try {
-      final firestoreService = FirestoreService();
+      final firestoreService = FirestoreService.instance;
       await firestoreService.getPersonalInfo();
       setState(() {
         _isFirebaseConnected = true;

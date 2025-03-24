@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -13,7 +14,9 @@ import 'viewmodels/project_viewmodel.dart';
 import 'viewmodels/service_viewmodel.dart';
 import 'viewmodels/contact_viewmodel.dart';
 import 'viewmodels/theme_viewmodel.dart';
+import 'viewmodels/profile_viewmodel.dart';
 import 'services/auth_service.dart';
+import 'services/firestore_setup_service.dart';
 import 'views/home/home_screen.dart';
 import 'routes/admin_routes.dart';
 
@@ -30,7 +33,7 @@ void main() async {
     
     // Create a timer to enforce a timeout
     Timer? timeoutTimer;
-    timeoutTimer = Timer(const Duration(seconds: 5), () {
+    timeoutTimer = Timer(const Duration(seconds: 10), () {
       if (!firebaseInitialized) {
         print('Firebase initialization timed out, continuing without Firebase');
         timeoutTimer = null;
@@ -64,6 +67,15 @@ void main() async {
       analytics.logAppOpen();
     } catch (e) {
       print('Analytics not initialized: $e');
+    }
+    
+    // Initialize Firestore collections
+    try {
+      final firestoreSetupService = FirestoreSetupService();
+      await firestoreSetupService.initializeFirestore();
+    } catch (e) {
+      print('Failed to initialize Firestore collections: $e');
+      // Continue with app startup even if collection initialization fails
     }
     
     // Continue with loading fonts and running the app
@@ -108,6 +120,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ServiceViewModel()),
         ChangeNotifierProvider(create: (_) => ContactViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
+        ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+        ChangeNotifierProvider(create: (_) => ActivityViewModel()),
         ChangeNotifierProvider(create: (_) => AuthService()),
       ],
       child: Consumer<ThemeViewModel>(

@@ -1,5 +1,6 @@
 // lib/views/admin/services/services_manager.dart
 import 'package:flutter/material.dart';
+import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:portfolio_website/models/project_model.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
@@ -280,6 +281,13 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
+              final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+              await activityViewModel.logActivity(
+                type: 'delete',
+                message: 'You deleted the "${service.title}" service',
+                entityId: service.id,
+                metadata: {'title': service.title, 'type': 'service'},
+              );
               Navigator.pop(context);
               setState(() {
                 _isLoading = true;
@@ -287,7 +295,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
               
               try {
                 // Delete the service from Firestore
-                await FirestoreService().deleteService(service.id);
+                await FirestoreService.instance.deleteService(service.id);
                 
                 // Refresh the services list
                 if (mounted) {
@@ -548,7 +556,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog> {
       });
       
       try {
-        final firestoreService = FirestoreService();
+        final firestoreService = FirestoreService.instance;
         
         final serviceData = {
           'title': _titleController.text,
@@ -557,11 +565,35 @@ class _ServiceFormDialogState extends State<ServiceFormDialog> {
         };
         
         if (widget.service != null) {
-          // Update existing service
+          // After updating existing service
           await firestoreService.updateService(widget.service!.id, serviceData);
+  
+          // Log the activity
+          final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+          await activityViewModel.logActivity(
+            type: 'edit',
+            message: 'You updated the "${_titleController.text}" service',
+            entityId: widget.service!.id,
+            metadata: {'title': _titleController.text, 'type': 'service'},
+          );
+  
+          // Call onSave callback
+          widget.onSave();
         } else {
-          // Create new service
-          await firestoreService.addService(serviceData);
+          // After creating new service
+          final docRef = await firestoreService.addService(serviceData);
+  
+          // Log the activity
+          final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+          await activityViewModel.logActivity(
+            type: 'create',
+            message: 'You created a new service "${_titleController.text}"',
+            entityId: docRef.id,
+            metadata: {'title': _titleController.text, 'type': 'service'},
+          );
+  
+          // Call onSave callback
+          widget.onSave();
         }
         
         // Call onSave callback

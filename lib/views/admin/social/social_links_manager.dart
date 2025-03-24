@@ -4,6 +4,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:portfolio_website/config/app_config.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
 import 'package:portfolio_website/main.dart';
+import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class SocialLinksManagerScreen extends StatefulWidget {
   const SocialLinksManagerScreen({Key? key}) : super(key: key);
@@ -56,7 +58,7 @@ class _SocialLinksManagerScreenState extends State<SocialLinksManagerScreen> {
     
     try {
       // First try to load from Firestore
-      final firestoreService = FirestoreService();
+      final firestoreService = FirestoreService.instance;
       final socialLinks = await firestoreService.getSocialLinks();
       
       if (socialLinks.isNotEmpty) {
@@ -176,8 +178,22 @@ class _SocialLinksManagerScreenState extends State<SocialLinksManagerScreen> {
         'updatedAt': DateTime.now().toIso8601String(),
       };
       
-      final firestoreService = FirestoreService();
+      final firestoreService = FirestoreService.instance;
       await firestoreService.updateSocialLinks(socialLinks);
+
+      // Log the activity 
+      final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+      await activityViewModel.logActivity(
+        type: 'edit',
+        message: 'You updated your social media links',
+        entityId: 'social_links',
+        metadata: {
+          'github': _githubController.text.isNotEmpty,
+          'linkedin': _linkedinController.text.isNotEmpty,
+          'fiverr': _fiverrController.text.isNotEmpty,
+          'upwork': _upworkController.text.isNotEmpty
+        },
+      );
       
       setState(() {
         _successMessage = 'Social links updated successfully!';

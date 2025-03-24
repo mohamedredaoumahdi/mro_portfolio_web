@@ -1,7 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../../../models/project_model.dart';
 import '../../../widgets/responsive_wrapper.dart';
+import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
+
+import 'dart:ui_web' as ui;
 
 class ProjectDetailDialog extends StatefulWidget {
   final Project project;
@@ -21,15 +26,33 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
   @override
   void initState() {
     super.initState();
-    _controller = YoutubePlayerController.fromVideoId(
-      videoId: widget.project.youtubeVideoId,
-      autoPlay: true,
-      params: const YoutubePlayerParams(
-        showControls: true,
-        showFullscreenButton: true,
-        enableJavaScript: true,
-      ),
-    );
+    if (kIsWeb) {
+      _controller = YoutubePlayerController.fromVideoId(
+        videoId: widget.project.youtubeVideoId,
+        autoPlay: true,
+        params: const YoutubePlayerParams(
+          showControls: true,
+          showFullscreenButton: true,
+          enableJavaScript: false,
+          showVideoAnnotations: false,
+        ),
+      );
+    } else {
+      _controller = YoutubePlayerController.fromVideoId(
+        videoId: widget.project.youtubeVideoId,
+        autoPlay: true,
+      );
+    }
+
+    // Log the project view
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final activityViewModel =
+            Provider.of<ActivityViewModel>(context, listen: false);
+        activityViewModel.logProjectView(
+            widget.project.id, widget.project.title);
+      }
+    });
   }
 
   @override
@@ -43,24 +66,14 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: context.responsive<EdgeInsets>(
-        mobile: const EdgeInsets.all(16),
-        tablet: const EdgeInsets.all(48),
-        desktop: const EdgeInsets.all(80),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: MediaQuery.of(context).size.width * 0.2, // Centers the dialog
+        vertical: 40,
       ),
       child: Container(
-        width: double.infinity,
+        width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
         constraints: BoxConstraints(
-          maxWidth: context.responsive<double>(
-            mobile: double.infinity,
-            tablet: 700,
-            desktop: 900,
-          ),
-          maxHeight: context.responsive<double>(
-            mobile: MediaQuery.of(context).size.height * 0.8,
-            tablet: MediaQuery.of(context).size.height * 0.8,
-            desktop: MediaQuery.of(context).size.height * 0.9,
-          ),
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
         ),
         decoration: BoxDecoration(
           color: Theme.of(context).dialogBackgroundColor,
@@ -88,22 +101,25 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
               ),
             ),
             const Divider(),
-            
+
             // YouTube Player
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // YouTube player
-                    AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: YoutubePlayer(
-                        controller: _controller,
-                        aspectRatio: 16 / 9,
+                    Center(
+                      
+                        child: AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child: YoutubePlayer(
+                            controller: _controller,
+                            aspectRatio: 16 / 9,
+                          ),
+                        ),
                       ),
-                    ),
                     
+
                     // Project details
                     Padding(
                       padding: const EdgeInsets.all(24),
@@ -133,10 +149,12 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
                                 label: Text(
                                   tech,
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
                                   ),
                                 ),
-                                backgroundColor: Theme.of(context).colorScheme.primary,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
                               );
                             }).toList(),
                           ),

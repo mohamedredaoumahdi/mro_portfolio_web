@@ -5,6 +5,7 @@ import 'package:portfolio_website/models/project_model.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
 import 'package:portfolio_website/viewmodels/project_viewmodel.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 
 class ProjectManagerScreen extends StatefulWidget {
   const ProjectManagerScreen({Key? key}) : super(key: key);
@@ -149,7 +150,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
               newIndex -= 1;
             }
             // Implement reordering logic with Firestore
-            FirestoreService().reorderProjects(oldIndex, newIndex).then((_) {
+            FirestoreService.instance.reorderProjects(oldIndex, newIndex).then((_) {
               // Refresh the projects list
               projectViewModel.loadProjects();
             }).catchError((error) {
@@ -282,6 +283,13 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
+              final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+              await activityViewModel.logActivity(
+                type: 'delete',
+                message: 'You deleted the "${project.title}" project',
+                entityId: project.id,
+                metadata: {'title': project.title},
+              );
               Navigator.pop(context);
               setState(() {
                 _isLoading = true;
@@ -289,7 +297,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
               
               try {
                 // Delete the project from Firestore
-                await FirestoreService().deleteProject(project.id);
+                await FirestoreService.instance.deleteProject(project.id);
                 
                 // Refresh the projects list
                 if (mounted) {
@@ -621,7 +629,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
       });
       
       try {
-        final firestoreService = FirestoreService();
+        final firestoreService = FirestoreService.instance;
         
         final projectData = {
           'title': _titleController.text,
@@ -636,9 +644,29 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
         if (widget.project != null) {
           // Update existing project
           await firestoreService.updateProject(widget.project!.id, projectData);
+
+          // Log the activity
+          final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+          await activityViewModel.logProjectEdit(widget.project!.id, _titleController.text);
+  
+          // Call onSave callback
+          widget.onSave();
+          
         } else {
-          // Create new project
-          await firestoreService.addProject(projectData);
+          // After creating new project
+          final docRef = await firestoreService.addProject(projectData);
+  
+          // Log the activity
+          final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+          await activityViewModel.logActivity(
+            type: 'create',
+            message: 'You created a new project "${_titleController.text}"',
+            entityId: docRef.id,
+            metadata: {'title': _titleController.text},
+          );
+  
+          // Call onSave callback
+          widget.onSave();
         }
         
         // Call onSave callback

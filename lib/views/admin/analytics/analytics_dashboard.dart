@@ -30,7 +30,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         _errorMessage = null;
       });
       
-      final firestoreService = FirestoreService();
+      final firestoreService = FirestoreService.instance;
       final data = await firestoreService.getAnalyticsData();
       
       setState(() {
