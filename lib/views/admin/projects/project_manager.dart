@@ -1,5 +1,6 @@
 // lib/views/admin/projects/project_manager.dart
 import 'package:flutter/material.dart';
+import 'package:portfolio_website/utils/image_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:portfolio_website/models/project_model.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
@@ -318,6 +319,8 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
   }
 }
 
+// lib/views/admin/projects/project_manager.dart - Updated ProjectFormDialog class
+
 class ProjectFormDialog extends StatefulWidget {
   final Project? project;
   final VoidCallback onSave;
@@ -337,14 +340,17 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _youtubeIdController = TextEditingController();
-  final _techFieldController = TextEditingController(); // Added controller for tech field
+  final _techFieldController = TextEditingController();
+  final _screenshotCaptionController = TextEditingController();
   
   List<String> _technologies = [];
+  List<ProjectScreenshot> _screenshots = [];
   String _newTech = '';
   bool _isLoading = false;
   String? _errorMessage;
   String? _previewVideoId;
   bool _isPreviewVisible = false;
+  ProjectScreenshot? _selectedScreenshot;
   
   @override
   void initState() {
@@ -356,6 +362,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
       _descriptionController.text = widget.project!.description;
       _youtubeIdController.text = widget.project!.youtubeVideoId;
       _technologies = List.from(widget.project!.technologies);
+      _screenshots = List.from(widget.project!.screenshots);
       _previewVideoId = widget.project!.youtubeVideoId;
     }
   }
@@ -366,6 +373,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
     _descriptionController.dispose();
     _youtubeIdController.dispose();
     _techFieldController.dispose();
+    _screenshotCaptionController.dispose();
     super.dispose();
   }
 
@@ -375,7 +383,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
     
     return Dialog(
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 700),
+        constraints: const BoxConstraints(maxWidth: 900, maxHeight: 700),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Form(
@@ -570,6 +578,49 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                             );
                           }).toList(),
                         ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Screenshots section
+                        const Text(
+                          'Project Screenshots',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add screenshots of your project to showcase features and UI',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Add screenshot button
+                        ElevatedButton.icon(
+                          onPressed: _pickScreenshot,
+                          icon: const Icon(Icons.add_photo_alternate),
+                          label: const Text('Add Screenshot'),
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Screenshots grid
+                        if (_screenshots.isNotEmpty)
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 1.0,
+                            ),
+                            itemCount: _screenshots.length,
+                            itemBuilder: (context, index) {
+                              final screenshot = _screenshots[index];
+                              return _buildScreenshotTile(screenshot);
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -606,6 +657,227 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
     );
   }
   
+  // Build a tile to display a screenshot with options
+  Widget _buildScreenshotTile(ProjectScreenshot screenshot) {
+    return Stack(
+      children: [
+        // Screenshot preview
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: _selectedScreenshot?.id == screenshot.id 
+                ? Theme.of(context).colorScheme.primary 
+                : Colors.grey.shade300,
+              width: _selectedScreenshot?.id == screenshot.id ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(7),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Image from base64
+                ImageUtils.base64ToImage(
+                  screenshot.imageBase64,
+                  fit: BoxFit.cover,
+                ),
+                
+                // Caption overlay at bottom
+                if (screenshot.caption.isNotEmpty)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      color: Colors.black.withOpacity(0.5),
+                      child: Text(
+                        screenshot.caption,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  
+                // Semi-transparent overlay when selected
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _selectScreenshot(screenshot),
+                    splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    highlightColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(7),
+                    child: Container(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Delete button
+        Positioned(
+          top: 4,
+          right: 4,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 16),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(
+                minWidth: 24,
+                minHeight: 24,
+              ),
+              onPressed: () => _removeScreenshot(screenshot),
+              tooltip: 'Remove screenshot',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  // Select a screenshot to edit
+  void _selectScreenshot(ProjectScreenshot screenshot) {
+    setState(() {
+      if (_selectedScreenshot?.id == screenshot.id) {
+        _selectedScreenshot = null;
+        _screenshotCaptionController.clear();
+      } else {
+        _selectedScreenshot = screenshot;
+        _screenshotCaptionController.text = screenshot.caption;
+        
+        // Show dialog to edit caption
+        _showCaptionEditDialog(screenshot);
+      }
+    });
+  }
+  
+  // Remove a screenshot
+  void _removeScreenshot(ProjectScreenshot screenshot) {
+    setState(() {
+      _screenshots.removeWhere((s) => s.id == screenshot.id);
+      if (_selectedScreenshot?.id == screenshot.id) {
+        _selectedScreenshot = null;
+        _screenshotCaptionController.clear();
+      }
+    });
+  }
+  
+  // Show dialog to edit screenshot caption
+  void _showCaptionEditDialog(ProjectScreenshot screenshot) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Screenshot Caption'),
+        content: TextField(
+          controller: _screenshotCaptionController,
+          decoration: const InputDecoration(
+            labelText: 'Caption',
+            hintText: 'Enter a caption for this screenshot',
+          ),
+          maxLength: 100,
+          maxLines: 2,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final updatedCaption = _screenshotCaptionController.text;
+              setState(() {
+                final index = _screenshots.indexWhere((s) => s.id == screenshot.id);
+                if (index != -1) {
+                  _screenshots[index] = ProjectScreenshot(
+                    id: screenshot.id,
+                    imageBase64: screenshot.imageBase64,
+                    caption: updatedCaption,
+                  );
+                }
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Pick a new screenshot from device
+  Future<void> _pickScreenshot() async {
+    try {
+      final screenshot = await ImageUtils.pickImage();
+      if (screenshot != null) {
+        // Check if the image is too large (Firestore has a 1MB limit per document)
+        final sizeInKB = ImageUtils.getBase64SizeInKB(screenshot.imageBase64);
+        if (sizeInKB > 800) { // 800KB seems reasonable, leaving room for other fields
+          setState(() {
+            _errorMessage = 'Image is too large (${sizeInKB.toStringAsFixed(0)}KB). Please choose a smaller image or reduce quality.';
+          });
+          return;
+        }
+        
+        // Show caption dialog
+        _screenshotCaptionController.clear();
+        final captionResult = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Add Caption'),
+            content: TextField(
+              controller: _screenshotCaptionController,
+              decoration: const InputDecoration(
+                labelText: 'Caption (Optional)',
+                hintText: 'Enter a caption for this screenshot',
+              ),
+              maxLength: 100,
+              maxLines: 2,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context, _screenshotCaptionController.text);
+                },
+                child: const Text('Add Screenshot'),
+              ),
+            ],
+          ),
+        );
+        
+        if (captionResult != null) {
+          setState(() {
+            _screenshots.add(ProjectScreenshot(
+              id: screenshot.id,
+              imageBase64: screenshot.imageBase64,
+              caption: captionResult,
+            ));
+          });
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error picking screenshot: ${e.toString()}';
+      });
+    }
+  }
+  
   void _addTechnology() {
     if (_newTech.isNotEmpty) {
       setState(() {
@@ -639,6 +911,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
           'date': DateTime.now().toIso8601String(),
           // Use YouTube thumbnail as project thumbnail
           'thumbnailUrl': 'https://img.youtube.com/vi/${_youtubeIdController.text}/hqdefault.jpg',
+          'screenshots': _screenshots,
         };
         
         if (widget.project != null) {
@@ -668,9 +941,6 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
           // Call onSave callback
           widget.onSave();
         }
-        
-        // Call onSave callback
-        widget.onSave();
       } catch (e) {
         setState(() {
           _errorMessage = 'Failed to save project: ${e.toString()}';

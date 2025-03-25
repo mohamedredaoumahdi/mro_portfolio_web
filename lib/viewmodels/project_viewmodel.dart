@@ -39,7 +39,7 @@ class ProjectViewModel extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
-      
+
       // Simulate network delay in debug mode
       if (kDebugMode) {
         await Future.delayed(const Duration(milliseconds: 500));
@@ -52,7 +52,8 @@ class ProjectViewModel extends ChangeNotifier {
           _setupRealTimeListener();
           return; // Early return as listener will handle updates
         } catch (e) {
-          print('Error setting up Firestore listener: $e - Falling back to local config');
+          print(
+              'Error setting up Firestore listener: $e - Falling back to local config');
           // Firebase error - fall back to local config
           _loadFromAppConfig();
         }
@@ -72,57 +73,147 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  // Set up real-time listener for projects collection
+  // Update to the _setupRealTimeListener method in ProjectViewModel
+
   void _setupRealTimeListener() {
     print('Setting up real-time listener for projects...');
-    
+
     // Cancel existing subscription if any
     _subscription?.cancel();
-    
+
     // Set up listener
     _subscription = FirebaseFirestore.instance
         .collection('projects')
         .orderBy('order')
         .snapshots()
         .listen((snapshot) {
-          print('Real-time update for projects: ${snapshot.docs.length} items');
-          
-          final List<Project> updatedProjects = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return Project(
-              id: doc.id,
-              title: data['title'] ?? '',
-              description: data['description'] ?? '',
-              technologies: List<String>.from(data['technologies'] ?? []),
-              youtubeVideoId: data['youtubeVideoId'] ?? '',
-              thumbnailUrl: data['thumbnailUrl'] ?? '',
-              date: data['createdAt'] != null 
-                  ? (data['createdAt'] as Timestamp).toDate() 
-                  : DateTime.now(),
-            );
+      print('Real-time update for projects: ${snapshot.docs.length} items');
+
+      final List<Project> updatedProjects = snapshot.docs.map((doc) {
+        final data = doc.data();
+
+        // Handle screenshots array in the project data
+        List<ProjectScreenshot> screenshots = [];
+        if (data['screenshots'] != null && data['screenshots'] is List) {
+          screenshots = (data['screenshots'] as List).map((screenshotData) {
+            if (screenshotData is Map<String, dynamic>) {
+              return ProjectScreenshot.fromMap(screenshotData);
+            }
+            return ProjectScreenshot(id: '', imageBase64: '');
           }).toList();
-          
-          _projects = updatedProjects;
-          _isLoading = false;
-          _errorMessage = null;
-          notifyListeners();
-        }, onError: (e) {
-          print('Error in real-time listener: $e');
-          _errorMessage = 'Error loading projects: $e';
-          _loadFromAppConfig();
-          _isLoading = false;
-          notifyListeners();
-        });
+        }
+
+        return Project(
+          id: doc.id,
+          title: data['title'] ?? '',
+          description: data['description'] ?? '',
+          technologies: List<String>.from(data['technologies'] ?? []),
+          youtubeVideoId: data['youtubeVideoId'] ?? '',
+          thumbnailUrl: data['thumbnailUrl'] ?? '',
+          date: data['createdAt'] != null
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
+          screenshots: screenshots, // Add the screenshots field
+        );
+      }).toList();
+
+      _projects = updatedProjects;
+      _isLoading = false;
+      _errorMessage = null;
+      notifyListeners();
+    }, onError: (e) {
+      print('Error in real-time listener: $e');
+      _errorMessage = 'Error loading projects: $e';
+      _loadFromAppConfig();
+      _isLoading = false;
+      notifyListeners();
+    });
   }
-  
+
   // Load data from AppConfig as fallback
   void _loadFromAppConfig() {
     print('Loading projects from AppConfig fallback');
     final projectsList = AppConfig.projects;
     _projects = List.generate(
       projectsList.length,
-      (index) => Project.fromConfig(index, projectsList[index]),
+      (index) {
+        // Load project from AppConfig
+        final project = Project.fromConfig(index, projectsList[index]);
+
+        // Debug print
+        print(
+            'Loaded project from AppConfig: ${project.title}, screenshots: ${project.screenshots.length}');
+
+        return project;
+      },
     );
+
+    // If coming from AppConfig, you could also try to load screenshots from Firestore separately
+    // even if the rest of the project info is from AppConfig
+    if (_isFirebaseAvailable) {
+      _loadScreenshotsFromFirestore();
+    }
+  }
+
+// New method to try loading just screenshots from Firestore
+  Future<void> _loadScreenshotsFromFirestore() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('projects').get();
+      final Map<String, List<ProjectScreenshot>> screenshotsByTitle = {};
+
+      // Create a map of project title to screenshots
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final String title = data['title'] ?? '';
+
+        // Parse screenshots if available
+        if (data['screenshots'] != null && data['screenshots'] is List) {
+          final List<ProjectScreenshot> screenshots =
+              (data['screenshots'] as List)
+                  .map((screenshotData) {
+                    if (screenshotData is Map<String, dynamic>) {
+                      return ProjectScreenshot.fromMap(screenshotData);
+                    }
+                    return ProjectScreenshot(id: '', imageBase64: '');
+                  })
+                  .where((screenshot) => screenshot.id.isNotEmpty)
+                  .toList();
+
+          if (screenshots.isNotEmpty) {
+            screenshotsByTitle[title] = screenshots;
+          }
+        }
+      }
+
+      // Update projects with screenshots from Firestore
+      if (screenshotsByTitle.isNotEmpty) {
+        print(
+            'Found screenshots in Firestore for ${screenshotsByTitle.length} projects');
+
+        for (int i = 0; i < _projects.length; i++) {
+          final project = _projects[i];
+          if (screenshotsByTitle.containsKey(project.title)) {
+            _projects[i] = Project(
+              id: project.id,
+              title: project.title,
+              description: project.description,
+              technologies: project.technologies,
+              youtubeVideoId: project.youtubeVideoId,
+              thumbnailUrl: project.thumbnailUrl,
+              date: project.date,
+              screenshots: screenshotsByTitle[project.title]!,
+            );
+            print(
+                'Updated screenshots for ${project.title}: ${screenshotsByTitle[project.title]!.length} screenshots');
+          }
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error loading screenshots from Firestore: $e');
+      // Continue with projects without screenshots
+    }
   }
 
   // Select a project
@@ -139,11 +230,11 @@ class ProjectViewModel extends ChangeNotifier {
 
   // Filter projects by technology
   List<Project> filterByTechnology(String technology) {
-    return _projects.where((project) => 
-      project.technologies.contains(technology)
-    ).toList();
+    return _projects
+        .where((project) => project.technologies.contains(technology))
+        .toList();
   }
-  
+
   @override
   void dispose() {
     // Cancel subscription when viewmodel is disposed
