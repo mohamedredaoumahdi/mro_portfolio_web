@@ -1,0 +1,70 @@
+{
+    "name": "Mohamed Reda Oumahdi - Mobile App Developer",
+    "short_name": "MRO Portfolio",
+    "description": "Professional mobile app developer specializing in Flutter, iOS, and Android development.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#121212",
+    "theme_color": "#4A00E0",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+      {
+        "src": "icons/Icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "icons/Icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "icons/Icon-maskable-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "maskable"
+      },
+      {
+        "src": "icons/Icon-maskable-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      }
+    ],
+    "screenshots": [
+      {
+        "src": "screenshots/mobile.png",
+        "sizes": "750x1334",
+        "type": "image/png",
+        "platform": "narrow",
+        "label": "Mobile View of MRO Portfolio"
+      },
+      {
+        "src": "screenshots/desktop.png",
+        "sizes": "1280x800",
+        "type": "image/png",
+        "platform": "wide",
+        "label": "Desktop View of MRO Portfolio"
+      }
+    ],
+    "related_applications": [],
+    "shortcuts": [
+      {
+        "name": "Projects",
+        "short_name": "Projects",
+        "description": "View my portfolio projects",
+        "url": "/#projects",
+        "icons": [{ "src": "icons/projects.png", "sizes": "96x96" }]
+      },
+      {
+        "name": "Contact",
+        "short_name": "Contact",
+        "description": "Get in touch with me",
+        "url": "/#contact",
+        "icons": [{ "src": "icons/contact.png", "sizes": "96x96" }]
+      }
+    ]
+  }
