@@ -159,8 +159,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 }
 
-// Dashboard Overview Screen - keep as is
-// Dashboard Overview with Real-time Activities
+// Dashboard Overview Screen
 class _DashboardOverview extends StatefulWidget {
   const _DashboardOverview();
 
@@ -174,23 +173,32 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
   List<Project> _projects = [];
   String? _errorMessage;
   late ActivityViewModel _activityViewModel;
+  bool _mounted = false;
 
   @override
   void initState() {
     super.initState();
+    _mounted = true;
     _activityViewModel = ActivityViewModel();
     _loadDashboardData();
   }
 
   @override
   void dispose() {
+    _mounted = false;
     _activityViewModel.dispose();
     super.dispose();
   }
 
+  void _safeSetState(VoidCallback fn) {
+    if (_mounted) {
+      setState(fn);
+    }
+  }
+
   Future<void> _loadDashboardData() async {
     try {
-      setState(() {
+      _safeSetState(() {
         _isLoading = true;
         _errorMessage = null;
       });
@@ -205,13 +213,13 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
       final projects = await firestoreService.getProjects();
 
       // Update state with fetched data
-      setState(() {
+      _safeSetState(() {
         _analyticsData = analyticsData;
         _projects = projects;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
+      _safeSetState(() {
         _errorMessage = 'Error loading dashboard data: ${e.toString()}';
         _isLoading = false;
       });
@@ -420,7 +428,6 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                         subtitle: Text(activity.timeAgo),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
-                          // Navigate to detail page or show more info based on activity.entityId
                           _showActivityDetails(context, activity);
                         },
                       );

@@ -1,4 +1,3 @@
-// lib/services/activity_service.dart
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +9,15 @@ class ActivityService {
   
   final FirebaseFirestore _firestore;
   final CollectionReference _activitiesCollection;
+
+  // Stream controller for managing the activities stream
+  StreamController<List<Activity>>? _streamController;
+  StreamSubscription? _firestoreStreamSubscription;
+  
+  // Retry configuration
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
+  static const Duration _retryDelay = Duration(seconds: 10);
   
   // Private constructor for singleton
   ActivityService._internal() :
@@ -117,51 +125,22 @@ class ActivityService {
     }
   }
   
-  // Get activities stream for real-time updates with reconnection logic
+  // Get activities stream for real-time updates
   Stream<List<Activity>> getActivitiesStream({int limit = 10}) {
     if (!_isFirebaseAvailable) {
       print('Cannot stream activities - Firebase unavailable');
-      // Return empty stream
       return Stream.value([]);
     }
     
-    // Create a stream transformer that handles errors and reconnects
-    StreamTransformer<QuerySnapshot<Object?>, List<Activity>> transformer = 
-      StreamTransformer.fromHandlers(
-        handleData: (QuerySnapshot data, EventSink<List<Activity>> sink) {
-          final activities = data.docs.map((doc) => Activity.fromFirestore(doc)).toList();
-          sink.add(activities);
-        },
-        handleError: (error, stackTrace, sink) {
-          print('Activity stream error: $error\n$stackTrace');
-          // Add empty list to prevent stream from breaking
-          sink.add([]);
-          
-          // Try to reconnect after a delay
-          Timer(const Duration(seconds: 10), () {
-            print('Attempting to reconnect activity stream...');
-            // The stream will automatically try to reconnect
-          });
-        },
-        handleDone: (sink) {
-          print('Activity stream closed');
-          sink.close();
-        }
-      );
-    
-    // Apply the transformer to the stream
     return _activitiesCollection
         .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()
-        .timeout(
-          const Duration(seconds: 30),
-          onTimeout: (sink) {
-            print('Activity stream timed out - will reconnect');
-            sink.addError('Stream timeout');
-          },
-        )
-        .transform(transformer);
+        .map((QuerySnapshot snapshot) {
+          return snapshot.docs
+              .map((doc) => Activity.fromFirestore(doc))
+              .toList();
+        });
   }
   
   // Clear old activities (for maintenance) with batched operations
