@@ -9,7 +9,7 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 
 class ProjectManagerScreen extends StatefulWidget {
-  const ProjectManagerScreen({Key? key}) : super(key: key);
+  const ProjectManagerScreen({super.key});
 
   @override
   State<ProjectManagerScreen> createState() => _ProjectManagerScreenState();
@@ -326,10 +326,10 @@ class ProjectFormDialog extends StatefulWidget {
   final VoidCallback onSave;
 
   const ProjectFormDialog({
-    Key? key,
+    super.key,
     this.project,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<ProjectFormDialog> createState() => _ProjectFormDialogState();

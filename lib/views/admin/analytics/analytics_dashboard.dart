@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class AnalyticsDashboardScreen extends StatefulWidget {
-  const AnalyticsDashboardScreen({Key? key}) : super(key: key);
+  const AnalyticsDashboardScreen({super.key});
 
   @override
   State<AnalyticsDashboardScreen> createState() => _AnalyticsDashboardScreenState();
@@ -391,10 +391,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                               reservedSize: 40,
                             ),
                           ),
-                          topTitles: AxisTitles(
+                          topTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
                           ),
-                          rightTitles: AxisTitles(
+                          rightTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
                           ),
                         ),

@@ -6,9 +6,9 @@ class NavBar extends StatelessWidget {
   final Function(int) onNavItemTapped;
 
   const NavBar({
-    Key? key,
+    super.key,
     required this.onNavItemTapped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +23,9 @@ class _DesktopNavBar extends StatelessWidget {
   final Function(int) onNavItemTapped;
 
   const _DesktopNavBar({
-    Key? key,
+    super.key,
     required this.onNavItemTapped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +72,9 @@ class _MobileNavBar extends StatelessWidget {
   final Function(int) onNavItemTapped;
 
   const _MobileNavBar({
-    Key? key,
+    super.key,
     required this.onNavItemTapped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -192,11 +192,11 @@ class _NavItem extends StatelessWidget {
   final Function(int) onTap;
 
   const _NavItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.index,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -224,12 +224,12 @@ class _MobileNavItem extends StatelessWidget {
   final IconData icon;
 
   const _MobileNavItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.index,
     required this.onTap,
     required this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

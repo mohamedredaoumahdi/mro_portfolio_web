@@ -8,7 +8,7 @@ import 'package:portfolio_website/views/admin/dashboard_screen.dart';
 // Admin route names
 class AdminRoutes {
   static const String adminPrefix = '/admin-mro';
-  static const String login = '$adminPrefix';
+  static const String login = adminPrefix;
   static const String dashboard = '$adminPrefix/dashboard';
   static const String projects = '$adminPrefix/projects';
   static const String services = '$adminPrefix/services';

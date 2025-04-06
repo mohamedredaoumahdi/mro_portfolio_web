@@ -11,7 +11,7 @@ import 'widgets/social_button.dart';
 import 'widgets/contact_form.dart';
 
 class ContactSection extends StatelessWidget {
-  const ContactSection({Key? key}) : super(key: key);
+  const ContactSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +207,7 @@ class ContactSection extends StatelessWidget {
   }
   
   Widget _buildSocialLinks(BuildContext context) {
-    final socialLinks = AppConfig.socialLinks;
+    const socialLinks = AppConfig.socialLinks;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +248,7 @@ class ContactSection extends StatelessWidget {
   }
   
   Widget _buildHireMeLinks(BuildContext context) {
-    final socialLinks = AppConfig.socialLinks;
+    const socialLinks = AppConfig.socialLinks;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

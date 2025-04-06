@@ -12,9 +12,9 @@ class ProjectDetailDialog extends StatefulWidget {
   final Project project;
 
   const ProjectDetailDialog({
-    Key? key,
+    super.key,
     required this.project,
-  }) : super(key: key);
+  });
 
   @override
   State<ProjectDetailDialog> createState() => _ProjectDetailDialogState();

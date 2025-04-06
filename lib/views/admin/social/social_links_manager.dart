@@ -8,7 +8,7 @@ import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class SocialLinksManagerScreen extends StatefulWidget {
-  const SocialLinksManagerScreen({Key? key}) : super(key: key);
+  const SocialLinksManagerScreen({super.key});
 
   @override
   State<SocialLinksManagerScreen> createState() => _SocialLinksManagerScreenState();
@@ -110,8 +110,7 @@ class _SocialLinksManagerScreenState extends State<SocialLinksManagerScreen> {
     }
     
     final urlRegExp = RegExp(
-      r'^(https?:\/\/)?' + // protocol
-      r'((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|' + // domain name
+      r'^(https?:\/\/)?' r'((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|' + // domain name
       r'((\d{1,3}\.){3}\d{1,3}))' + // OR ip (v4) address
       r'(\:\d+)?(\/[-a-z\d%_.~+]*)*' + // port and path
       r'(\?[;&a-z\d%_.~+=-]*)?' + // query string

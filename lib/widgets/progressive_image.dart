@@ -12,7 +12,7 @@ class ProgressiveImage extends StatelessWidget {
   final BorderRadius? borderRadius;
 
   const ProgressiveImage({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.width,
     required this.height,
@@ -20,7 +20,7 @@ class ProgressiveImage extends StatelessWidget {
     this.errorWidget,
     this.placeholder,
     this.borderRadius,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

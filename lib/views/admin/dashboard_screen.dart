@@ -24,9 +24,9 @@ class AdminDashboardScreen extends StatefulWidget {
   final int initialTabIndex;
   
   const AdminDashboardScreen({
-    Key? key, 
+    super.key, 
     this.initialTabIndex = 0,
-  }) : super(key: key);
+  });
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -476,7 +476,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Activity Details'),
+        title: const Text('Activity Details'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

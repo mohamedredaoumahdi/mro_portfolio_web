@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../viewmodels/contact_viewmodel.dart';
 
 class ContactForm extends StatefulWidget {
-  const ContactForm({Key? key}) : super(key: key);
+  const ContactForm({super.key});
 
   @override
   State<ContactForm> createState() => _ContactFormState();

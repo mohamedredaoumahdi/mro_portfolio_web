@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 class ServiceSkeleton extends StatefulWidget {
-  const ServiceSkeleton({Key? key}) : super(key: key);
+  const ServiceSkeleton({super.key});
 
   @override
   State<ServiceSkeleton> createState() => _ServiceSkeletonState();

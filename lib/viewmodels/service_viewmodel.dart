@@ -111,7 +111,7 @@ class ServiceViewModel extends ChangeNotifier {
   // Load data from AppConfig as fallback
   void _loadFromAppConfig() {
     print('Loading services from AppConfig fallback');
-    final servicesList = AppConfig.services;
+    const servicesList = AppConfig.services;
     _services = List.generate(
       servicesList.length,
       (index) => Service.fromConfig(index, servicesList[index]),

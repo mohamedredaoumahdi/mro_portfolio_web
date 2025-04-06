@@ -8,12 +8,12 @@ class SocialButton extends StatefulWidget {
   final Color? color;
 
   const SocialButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.url,
     required this.label,
     this.color,
-  }) : super(key: key);
+  });
 
   @override
   State<SocialButton> createState() => _SocialButtonState();

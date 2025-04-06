@@ -6,7 +6,7 @@ import 'package:portfolio_website/theme/app_theme.dart';
 import 'package:portfolio_website/viewmodels/theme_viewmodel.dart';
 
 class AdminLoginScreen extends StatefulWidget {
-  const AdminLoginScreen({Key? key}) : super(key: key);
+  const AdminLoginScreen({super.key});
 
   @override
   State<AdminLoginScreen> createState() => _AdminLoginScreenState();

@@ -7,7 +7,7 @@ import 'package:portfolio_website/services/firestore_service.dart';
 import 'package:portfolio_website/viewmodels/service_viewmodel.dart';
 
 class ServicesManagerScreen extends StatefulWidget {
-  const ServicesManagerScreen({Key? key}) : super(key: key);
+  const ServicesManagerScreen({super.key});
 
   @override
   State<ServicesManagerScreen> createState() => _ServicesManagerScreenState();
@@ -321,10 +321,10 @@ class ServiceFormDialog extends StatefulWidget {
   final VoidCallback onSave;
 
   const ServiceFormDialog({
-    Key? key,
+    super.key,
     this.service,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<ServiceFormDialog> createState() => _ServiceFormDialogState();

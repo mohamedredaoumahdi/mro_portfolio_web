@@ -8,10 +8,10 @@ class ThemeToggleButton extends StatelessWidget {
   final bool isInAppBar;
   
   const ThemeToggleButton({
-    Key? key, 
+    super.key, 
     this.showLabel = false,
     this.isInAppBar = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -7,7 +7,7 @@ import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
-  const ProfileEditorScreen({Key? key}) : super(key: key);
+  const ProfileEditorScreen({super.key});
 
   @override
   State<ProfileEditorScreen> createState() => _ProfileEditorScreenState();

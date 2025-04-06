@@ -5,9 +5,9 @@ class ServiceCard extends StatefulWidget {
   final Service service;
 
   const ServiceCard({
-    Key? key,
+    super.key,
     required this.service,
-  }) : super(key: key);
+  });
 
   @override
   State<ServiceCard> createState() => _ServiceCardState();

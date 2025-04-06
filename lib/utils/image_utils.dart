@@ -9,7 +9,7 @@ import 'package:image/image.dart' as img; // Add this package to pubspec.yaml
 import '../models/project_model.dart';
 
 class ImageUtils {
-  static final _uuid = Uuid();
+  static const _uuid = Uuid();
   
   // Pick an image from device and convert to base64
   static Future<ProjectScreenshot?> pickImage({

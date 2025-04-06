@@ -16,12 +16,12 @@ class ResponsiveWrapper extends StatelessWidget {
   final Widget? largeDesktop;
 
   const ResponsiveWrapper({
-    Key? key,
+    super.key,
     required this.mobile,
     this.tablet,
     this.desktop,
     this.largeDesktop,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -94,11 +94,11 @@ class ResponsiveContainer extends StatelessWidget {
   final bool centerContent;
 
   const ResponsiveContainer({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.centerContent = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

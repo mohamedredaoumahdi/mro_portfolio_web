@@ -4,7 +4,7 @@ import 'package:portfolio_website/config/app_config.dart';
 class AppTheme {
   static ThemeData getTheme({bool isDarkMode = true}) {
     // Get theme configurations from AppConfig
-    final config = AppConfig.themeConfig;
+    const config = AppConfig.themeConfig;
     
     // Override dark mode setting if needed
     final brightness = isDarkMode ? Brightness.dark : Brightness.light;
@@ -32,12 +32,10 @@ class AppTheme {
       primary: Color(config.primaryColor),
       secondary: Color(config.accentColor),
       surface: surfaceColor,
-      background: backgroundColor,
       error: Colors.red,
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: textPrimaryColor,
-      onBackground: textPrimaryColor,
       onError: Colors.white,
       brightness: brightness,
     );

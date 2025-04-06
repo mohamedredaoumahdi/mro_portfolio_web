@@ -133,7 +133,7 @@ class ProjectViewModel extends ChangeNotifier {
   // Load data from AppConfig as fallback
   void _loadFromAppConfig() {
     print('Loading projects from AppConfig fallback');
-    final projectsList = AppConfig.projects;
+    const projectsList = AppConfig.projects;
     _projects = List.generate(
       projectsList.length,
       (index) {

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 class ProjectSkeleton extends StatefulWidget {
-  const ProjectSkeleton({Key? key}) : super(key: key);
+  const ProjectSkeleton({super.key});
 
   @override
   State<ProjectSkeleton> createState() => _ProjectSkeletonState();

@@ -10,7 +10,7 @@ import 'widgets/project_card.dart';
 import 'widgets/project_detail_dialog.dart';
 
 class ProjectsSection extends StatelessWidget {
-  const ProjectsSection({Key? key}) : super(key: key);
+  const ProjectsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -127,8 +127,8 @@ class ProjectsSection extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 3,
       itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.0),
           child: ProjectSkeleton(),
         );
       },
@@ -147,7 +147,7 @@ class ProjectsSection extends StatelessWidget {
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
-        return ProjectSkeleton();
+        return const ProjectSkeleton();
       },
     );
   }
@@ -164,7 +164,7 @@ class ProjectsSection extends StatelessWidget {
       ),
       itemCount: 6,
       itemBuilder: (context, index) {
-        return ProjectSkeleton();
+        return const ProjectSkeleton();
       },
     );
   }

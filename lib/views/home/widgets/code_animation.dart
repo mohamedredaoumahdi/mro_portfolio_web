@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../viewmodels/theme_viewmodel.dart';
 
 class CodeAnimation extends StatefulWidget {
-  const CodeAnimation({Key? key}) : super(key: key);
+  const CodeAnimation({super.key});
 
   @override
   State<CodeAnimation> createState() => _CodeAnimationState();
@@ -289,8 +289,8 @@ Widget build(BuildContext context) {
           parts.add(
             Text(
               content,
-              style: TextStyle(
-                color: const Color(0xFF569CD6), // Blue for keywords
+              style: const TextStyle(
+                color: Color(0xFF569CD6), // Blue for keywords
                 fontFamily: 'JetBrainsMono',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -305,8 +305,8 @@ Widget build(BuildContext context) {
           parts.add(
             Text(
               content,
-              style: TextStyle(
-                color: const Color(0xFF4EC9B0), // Teal for types
+              style: const TextStyle(
+                color: Color(0xFF4EC9B0), // Teal for types
                 fontFamily: 'JetBrainsMono',
                 fontSize: 14,
                 height: 1.5,
@@ -320,8 +320,8 @@ Widget build(BuildContext context) {
           parts.add(
             Text(
               content,
-              style: TextStyle(
-                color: const Color(0xFFCE9178), // Orange for strings
+              style: const TextStyle(
+                color: Color(0xFFCE9178), // Orange for strings
                 fontFamily: 'JetBrainsMono',
                 fontSize: 14,
                 height: 1.5,

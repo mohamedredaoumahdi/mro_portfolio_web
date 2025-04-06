@@ -9,7 +9,7 @@ import '../../widgets/skeleton_loaders/service_skeleton.dart';
 import 'widgets/service_card.dart';
 
 class ServicesSection extends StatelessWidget {
-  const ServicesSection({Key? key}) : super(key: key);
+  const ServicesSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -129,8 +129,8 @@ class ServicesSection extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 4,
       itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
           child: ServiceSkeleton(),
         );
       },
@@ -149,7 +149,7 @@ class ServicesSection extends StatelessWidget {
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
-        return ServiceSkeleton();
+        return const ServiceSkeleton();
       },
     );
   }
@@ -166,7 +166,7 @@ class ServicesSection extends StatelessWidget {
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
-        return ServiceSkeleton();
+        return const ServiceSkeleton();
       },
     );
   }

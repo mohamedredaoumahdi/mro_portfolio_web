@@ -17,7 +17,7 @@ import 'widgets/code_animation.dart';
 import 'widgets/nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -129,9 +129,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 flex: 3,
                                 child: _buildHeroContent(context),
                               ),
-                              Expanded(
+                              const Expanded(
                                 flex: 2,
-                                child: const CodeAnimation(),
+                                child: CodeAnimation(),
                               ),
                             ],
                           ),

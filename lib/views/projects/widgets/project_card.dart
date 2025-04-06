@@ -8,10 +8,10 @@ class ProjectCard extends StatefulWidget {
   final VoidCallback onTap;
 
   const ProjectCard({
-    Key? key,
+    super.key,
     required this.project,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<ProjectCard> createState() => _ProjectCardState();
@@ -166,7 +166,7 @@ class _ProjectCardState extends State<ProjectCard> {
                             materialTapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
                           );
-                        }).toList(),
+                        }),
                         if (widget.project.technologies.length > 5)
                           Chip(
                             label: Text(
