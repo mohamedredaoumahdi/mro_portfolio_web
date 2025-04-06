@@ -129,7 +129,10 @@ class ProjectsSection extends StatelessWidget {
       itemBuilder: (context, index) {
         return const Padding(
           padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: ProjectSkeleton(),
+          child: SizedBox(
+            height: 400,
+            child: ProjectSkeleton(),
+          ),
         );
       },
     );
@@ -143,7 +146,7 @@ class ProjectsSection extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 24,
         mainAxisSpacing: 24,
-        childAspectRatio: 0.85,
+        childAspectRatio: 0.7, // Taller cards for full screenshots
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
@@ -160,7 +163,7 @@ class ProjectsSection extends StatelessWidget {
         crossAxisCount: 3,
         crossAxisSpacing: 24,
         mainAxisSpacing: 24,
-        childAspectRatio: 0.85,
+        childAspectRatio: 0.7, // Taller cards for full screenshots
       ),
       itemCount: 6,
       itemBuilder: (context, index) {
@@ -193,9 +196,13 @@ class ProjectsSection extends StatelessWidget {
             child: FadeInAnimation(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: ProjectCard(
-                  project: viewModel.projects[index],
-                  onTap: () => _showProjectDetails(context, viewModel.projects[index]),
+                // Set a fixed height for list view cards to accommodate full-screen screenshots
+                child: SizedBox(
+                  height: 450, // Taller to show screenshots better
+                  child: ProjectCard(
+                    project: viewModel.projects[index],
+                    onTap: () => _showProjectDetails(context, viewModel.projects[index]),
+                  ),
                 ),
               ),
             ),
@@ -213,7 +220,8 @@ class ProjectsSection extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 24,
         mainAxisSpacing: 24,
-        childAspectRatio: 0.85,
+        // Use a taller aspect ratio for cards with full-screen screenshots
+        childAspectRatio: 0.7,
       ),
       itemCount: viewModel.projects.length,
       itemBuilder: (context, index) {
@@ -242,7 +250,8 @@ class ProjectsSection extends StatelessWidget {
         crossAxisCount: 3,
         crossAxisSpacing: 24,
         mainAxisSpacing: 24,
-        childAspectRatio: 0.85,
+        // Use a taller aspect ratio for cards with full-screen screenshots
+        childAspectRatio: 0.7,
       ),
       itemCount: viewModel.projects.length,
       itemBuilder: (context, index) {

@@ -58,17 +58,41 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // Use responsive inset padding based on screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Calculate appropriate inset padding
+    final horizontalInset = context.responsive<double>(
+      mobile: 16.0,
+      tablet: screenWidth * 0.1,
+      desktop: screenWidth * 0.2,
+    );
+    
+    final verticalInset = context.responsive<double>(
+      mobile: 16.0,
+      tablet: 24.0,
+      desktop: 40.0,
+    );
+    
+    // Calculate appropriate width constraint
+    final maxWidth = context.responsive<double>(
+      mobile: screenWidth,
+      tablet: screenWidth * 0.8,
+      desktop: screenWidth * 0.6,
+    );
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       insetPadding: EdgeInsets.symmetric(
-        horizontal: MediaQuery.of(context).size.width * 0.2, // Centers the dialog
-        vertical: 40,
+        horizontal: horizontalInset,
+        vertical: verticalInset,
       ),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
+        width: maxWidth,
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxHeight: screenHeight * 0.9,
         ),
         decoration: BoxDecoration(
           color: Theme.of(context).dialogBackgroundColor,
@@ -79,40 +103,7 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header with project title, YouTube button, and close button
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.project.title,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  Row(
-                    children: [
-                      // YouTube review button
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.play_circle_filled),
-                        label: const Text('See the review'),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                        ),
-                        onPressed: () {
-                          final youtubeUrl = 'https://www.youtube.com/watch?v=${widget.project.youtubeVideoId}';
-                          launchURL(youtubeUrl);
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      // Close button
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            _buildHeader(context),
             const Divider(),
 
             // Content
@@ -123,11 +114,11 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
                   children: [
                     // Screenshots section (if any)
                     if (widget.project.screenshots.isNotEmpty) ...[
-                      _buildScreenshotsSection(),
+                      _buildScreenshotsSection(context),
                       const SizedBox(height: 32),
                     ],
 
-                    // Description
+                    // Description and technologies
                     Padding(
                       padding: const EdgeInsets.all(24),
                       child: Column(
@@ -179,26 +170,98 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
     );
   }
   
-  // Build screenshots section with horizontal scrolling
-  Widget _buildScreenshotsSection() {
-    // Debug print to verify screenshots before displaying
-    print('Building screenshots section with ${widget.project.screenshots.length} screenshots');
-    if (widget.project.screenshots.isEmpty) {
-      print('No screenshots available for this project');
-      return const SizedBox.shrink(); // Return empty if no screenshots
-    }
-    
+  // Build responsive header section
+  Widget _buildHeader(BuildContext context) {
+    return ResponsiveWrapper(
+      mobile: _buildMobileHeader(context),
+      desktop: _buildDesktopHeader(context),
+    );
+  }
+  
+  // Mobile-specific header layout
+  Widget _buildMobileHeader(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.project.title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.play_circle_filled),
+            label: const Text('See the review'),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Theme.of(context).colorScheme.primary),
+            ),
+            onPressed: () => launchURL(_youtubeUrl),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  // Desktop header layout
+  Widget _buildDesktopHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            widget.project.title,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          Row(
+            children: [
+              // YouTube review button
+              OutlinedButton.icon(
+                icon: const Icon(Icons.play_circle_filled),
+                label: const Text('See the review'),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                ),
+                onPressed: () => launchURL(_youtubeUrl),
+              ),
+              const SizedBox(width: 8),
+              // Close button
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Build responsive screenshots section
+  Widget _buildScreenshotsSection(BuildContext context) {
     // Verify that screenshots have valid base64 data
     final validScreenshots = widget.project.screenshots.where((s) => 
       s.imageBase64.isNotEmpty && s.id.isNotEmpty
     ).toList();
     
     if (validScreenshots.isEmpty) {
-      print('Screenshots are present but none have valid base64 data');
       return const SizedBox.shrink();
     }
-    
-    print('Found ${validScreenshots.length} valid screenshots to display');
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,9 +276,13 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
         ),
         const SizedBox(height: 16),
         
-        // Screenshot gallery
+        // Screenshot gallery with responsive height
         SizedBox(
-          height: 340, // Reduced height
+          height: context.responsive<double>(
+            mobile: 240, // Smaller height on mobile
+            tablet: 320,
+            desktop: 340,
+          ),
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
@@ -231,14 +298,19 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
     );
   }
   
-  // Build a single screenshot item
+  // Build a responsive screenshot item
   Widget _buildScreenshotItem(ProjectScreenshot screenshot, int index) {
-    // Use about a fifth of the available width
-    final screenWidth = MediaQuery.of(context).size.width * 0.18;
+    // Calculate responsive width based on screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final itemWidth = context.responsive<double>(
+      mobile: screenWidth * 0.35, // Smaller on mobile
+      tablet: screenWidth * 0.25,
+      desktop: screenWidth * 0.18,
+    );
     
     return Container(
-      width: screenWidth,
-      margin: const EdgeInsets.only(right: 4),
+      width: itemWidth,
+      margin: const EdgeInsets.only(right: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -287,19 +359,4 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
       ),
     );
   }
-  
-  // This method is now removed since we don't need it anymore
-  // We're no longer tracking the current selected screenshot or handling navigation dots
-  /*
-  void _scrollToIndex(int index) {
-    final screenWidth = MediaQuery.of(context).size.width * 0.18;
-    final position = index * (screenWidth + 4); // width + margin
-    
-    _scrollController.animateTo(
-      position,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
-  }
-  */
 }
