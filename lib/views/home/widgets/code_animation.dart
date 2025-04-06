@@ -10,10 +10,11 @@ class CodeAnimation extends StatefulWidget {
   State<CodeAnimation> createState() => _CodeAnimationState();
 }
 
-class _CodeAnimationState extends State<CodeAnimation> {
+class _CodeAnimationState extends State<CodeAnimation> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   bool _isActive = true;
   Timer? _timer;
+  late final AnimationController _fadeController;
   
   final List<String> _codeSnippets = [
     '''
@@ -64,32 +65,71 @@ Widget build(BuildContext context) {
 ''',
   ];
 
+  // Pre-processed code for better performance
+  List<List<Widget>> _darkModeLines = [];
+  List<List<Widget>> _lightModeLines = [];
+
   @override
   void initState() {
     super.initState();
+    
+    // Initialize fade animation controller
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    
+    // Start with fade in
+    _fadeController.forward();
+    
+    // Start animation timer
     _startAnimation();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Pre-process code snippets after dependencies are ready
+    _processAllSnippets();
+  }
+
+  void _processAllSnippets() {
+    _darkModeLines = [];
+    _lightModeLines = [];
+    
+    for (final snippet in _codeSnippets) {
+      List<Widget> darkLines = [];
+      List<Widget> lightLines = [];
+      
+      final lines = snippet.split('\n');
+      for (final line in lines) {
+        darkLines.add(_buildSyntaxLine(line, isDarkMode: true));
+        lightLines.add(_buildSyntaxLine(line, isDarkMode: false));
+      }
+      
+      _darkModeLines.add(darkLines);
+      _lightModeLines.add(lightLines);
+    }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _fadeController.dispose();
     super.dispose();
   }
 
   void _startAnimation() {
     _timer = Timer.periodic(const Duration(seconds: 8), (timer) {
       if (mounted) {
-        setState(() {
-          _isActive = false;
-        });
-        
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            setState(() {
-              _currentIndex = (_currentIndex + 1) % _codeSnippets.length;
-              _isActive = true;
-            });
-          }
+        // Start fade out animation
+        _fadeController.reverse().then((_) {
+          // When fade out completes, change content and fade in
+          setState(() {
+            _currentIndex = (_currentIndex + 1) % _codeSnippets.length;
+          });
+          _fadeController.forward();
         });
       }
     });
@@ -99,10 +139,10 @@ Widget build(BuildContext context) {
   Widget build(BuildContext context) {
     final isDarkMode = Provider.of<ThemeViewModel>(context).isDarkMode;
     
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 500),
-      opacity: _isActive ? 1.0 : 0.0,
-      child: Container(
+    return FadeTransition(
+      opacity: _fadeController,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         width: 400,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -170,182 +210,140 @@ Widget build(BuildContext context) {
             const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: _buildCodeText(_codeSnippets[_currentIndex], isDarkMode),
+              child: RepaintBoundary(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _getCodeLines(isDarkMode),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildCodeText(String code, bool isDarkMode) {
-    // Add colored syntax highlighting
-    final lines = code.split('\n');
+  
+  // Get the pre-processed code lines for the current index
+  List<Widget> _getCodeLines(bool isDarkMode) {
+    if (_darkModeLines.isEmpty || _lightModeLines.isEmpty) {
+      // If processing hasn't completed yet
+      final lines = _codeSnippets[_currentIndex].split('\n');
+      return lines.map((line) => _buildSyntaxLine(line, isDarkMode: isDarkMode)).toList();
+    }
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: lines.map((line) {
-        // Basic syntax highlighting
-        if (line.contains('class ') || line.contains('void ') || line.contains('Future<') || line.contains('@override')) {
-          return _buildSyntaxLine(line, isKeyword: true, isDarkMode: isDarkMode);
-        } else if (line.contains('=') || line.contains('(') || line.contains(')') || line.contains('{') || line.contains('}')) {
-          return _buildSyntaxLine(line, isDarkMode: isDarkMode);
-        } else {
-          return Text(
-            line,
-            style: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black87,
-              fontFamily: 'JetBrainsMono',
-              fontSize: 14,
-              height: 1.5,
-            ),
-          );
-        }
-      }).toList(),
-    );
+    return isDarkMode 
+      ? _darkModeLines[_currentIndex] 
+      : _lightModeLines[_currentIndex];
   }
 
-  Widget _buildSyntaxLine(String line, {bool isKeyword = false, required bool isDarkMode}) {
-    final keywords = ['class', 'void', 'final', 'const', 'var', 'for', 'if', 'else', 'await', 'async', 'required', 'return', 'Future', 'Widget', 'BuildContext', 'override'];
-    final types = ['String', 'List', 'int', 'bool', 'double', 'Map', 'Set', 'Duration', 'Color', 'ThemeData'];
+  // Build syntax highlighted line
+  Widget _buildSyntaxLine(String line, {required bool isDarkMode}) {
+    // Keyword colors based on theme
+    final Color keywordColor = const Color(0xFF569CD6); // Blue
+    final Color typeColor = const Color(0xFF4EC9B0);    // Teal
+    final Color stringColor = const Color(0xFFCE9178);  // Orange
+    final Color normalColor = isDarkMode ? Colors.white70 : Colors.black87;
     
-    String formattedLine = line;
+    // Prepare spans for line
+    List<InlineSpan> spans = [];
     
-    if (isKeyword) {
-      for (final keyword in keywords) {
-        if (line.contains(keyword)) {
-          formattedLine = formattedLine.replaceAll(keyword, '<keyword>$keyword</keyword>');
-        }
+    // Find string literals with regex
+    final RegExp stringRegex = RegExp(r'"[^"]*"' + r"|'[^']*'");
+    final matches = stringRegex.allMatches(line);
+    
+    // Process line with strings
+    int lastPosition = 0;
+    for (final match in matches) {
+      // Add text before string with keyword highlighting
+      if (match.start > lastPosition) {
+        final beforeText = line.substring(lastPosition, match.start);
+        spans.add(_createTextSpan(beforeText, normalColor, keywordColor, typeColor));
       }
       
-      for (final type in types) {
-        if (line.contains(type)) {
-          formattedLine = formattedLine.replaceAll(type, '<type>$type</type>');
-        }
-      }
+      // Add the string literal
+      spans.add(TextSpan(
+        text: line.substring(match.start, match.end),
+        style: TextStyle(
+          color: stringColor,
+          fontFamily: 'JetBrainsMono',
+          fontSize: 14,
+          height: 1.5,
+        ),
+      ));
+      
+      lastPosition = match.end;
     }
     
-    if (line.contains('"') || line.contains("'")) {
-      final regex = RegExp(r'"[^"]*"');
-      formattedLine = formattedLine.replaceAllMapped(regex, (match) {
-        return '<string>${match.group(0)}</string>';
-      });
-      
-      final regex2 = RegExp(r"'[^']*'");
-      formattedLine = formattedLine.replaceAllMapped(regex2, (match) {
-        return '<string>${match.group(0)}</string>';
-      });
+    // Add remaining text after last string
+    if (lastPosition < line.length) {
+      final remainingText = line.substring(lastPosition);
+      spans.add(_createTextSpan(remainingText, normalColor, keywordColor, typeColor));
     }
     
-    // Split by tags
-    final parts = <Widget>[];
-    
-    int startIndex = 0;
-    while (startIndex < formattedLine.length) {
-      final keywordStart = formattedLine.indexOf('<keyword>', startIndex);
-      final typeStart = formattedLine.indexOf('<type>', startIndex);
-      final stringStart = formattedLine.indexOf('<string>', startIndex);
-      
-      int nextTagStart = _minPositive([
-        keywordStart, 
-        typeStart, 
-        stringStart
-      ]);
-      
-      if (nextTagStart == -1) {
-        // No more tags, add the rest of the string
-        parts.add(
-          Text(
-            formattedLine.substring(startIndex),
-            style: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black87,
-              fontFamily: 'JetBrainsMono',
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-        );
-        break;
-      } else {
-        // Add text before the tag
-        if (nextTagStart > startIndex) {
-          parts.add(
-            Text(
-              formattedLine.substring(startIndex, nextTagStart),
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : Colors.black87,
-                fontFamily: 'JetBrainsMono',
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          );
-        }
-        
-        // Process the tag
-        if (nextTagStart == keywordStart) {
-          final endTag = formattedLine.indexOf('</keyword>', keywordStart);
-          final content = formattedLine.substring(keywordStart + 9, endTag);
-          parts.add(
-            Text(
-              content,
-              style: const TextStyle(
-                color: Color(0xFF569CD6), // Blue for keywords
-                fontFamily: 'JetBrainsMono',
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
-            ),
-          );
-          startIndex = endTag + 10;
-        } else if (nextTagStart == typeStart) {
-          final endTag = formattedLine.indexOf('</type>', typeStart);
-          final content = formattedLine.substring(typeStart + 6, endTag);
-          parts.add(
-            Text(
-              content,
-              style: const TextStyle(
-                color: Color(0xFF4EC9B0), // Teal for types
-                fontFamily: 'JetBrainsMono',
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          );
-          startIndex = endTag + 7;
-        } else if (nextTagStart == stringStart) {
-          final endTag = formattedLine.indexOf('</string>', stringStart);
-          final content = formattedLine.substring(stringStart + 8, endTag);
-          parts.add(
-            Text(
-              content,
-              style: const TextStyle(
-                color: Color(0xFFCE9178), // Orange for strings
-                fontFamily: 'JetBrainsMono',
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          );
-          startIndex = endTag + 9;
-        }
-      }
-    }
-    
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: parts,
+    // Return the styled line
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          color: normalColor,
+          fontFamily: 'JetBrainsMono',
+          fontSize: 14,
+          height: 1.5,
+        ),
+        children: spans,
+      ),
     );
   }
   
-  int _minPositive(List<int> values) {
-    int min = -1;
-    for (final value in values) {
-      if (value >= 0 && (min == -1 || value < min)) {
-        min = value;
+  // Create text span with keyword highlighting
+  InlineSpan _createTextSpan(String text, Color normalColor, Color keywordColor, Color typeColor) {
+    // Keywords to highlight
+    final Map<String, Color> keywords = {
+      'class': keywordColor,
+      'void': keywordColor,
+      'final': keywordColor,
+      'const': keywordColor,
+      'var': keywordColor,
+      'for': keywordColor,
+      'if': keywordColor,
+      'else': keywordColor,
+      'await': keywordColor,
+      'async': keywordColor,
+      'required': keywordColor,
+      'return': keywordColor,
+      'print': keywordColor,
+      '@override': keywordColor,
+      'Future': typeColor,
+      'String': typeColor,
+      'List': typeColor,
+      'BuildContext': typeColor,
+      'Widget': typeColor,
+      'Scaffold': typeColor,
+      'AnimatedContainer': typeColor,
+      'Center': typeColor,
+      'Duration': typeColor,
+      'Text': typeColor,
+    };
+    
+    // Check for keywords
+    for (final entry in keywords.entries) {
+      if (text.contains(entry.key) &&
+          (text == entry.key || 
+           text.startsWith(entry.key + ' ') || 
+           text.endsWith(' ' + entry.key) || 
+           text.contains(' ' + entry.key + ' '))) {
+        
+        // Simple highlighting for exact keyword match
+        return TextSpan(
+          text: text,
+          style: TextStyle(
+            color: entry.value,
+            fontWeight: entry.value == keywordColor ? FontWeight.bold : FontWeight.normal,
+          ),
+        );
       }
     }
-    return min;
+    
+    // Return regular text if no keywords found
+    return TextSpan(text: text);
   }
 }

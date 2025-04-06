@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Add this package to pubspec.yaml
-import 'package:uuid/uuid.dart'; // Add this package to pubspec.yaml
-import 'package:image/image.dart' as img; // Add this package to pubspec.yaml
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
+import 'package:image/image.dart' as img;
 import '../models/project_model.dart';
 
 class ImageUtils {
   static const _uuid = Uuid();
+  static const int _maxImageSizeKB = 800; // Maximum size in KB for stored images
   
   // Pick an image from device and convert to base64
   static Future<ProjectScreenshot?> pickImage({
@@ -37,14 +38,28 @@ class ImageUtils {
       // Get image data
       final Uint8List imageBytes = await pickedFile.readAsBytes();
       
+      // Check size of image
+      final double sizeInKB = imageBytes.length / 1024;
+      print('Original image size: ${sizeInKB.toStringAsFixed(2)} KB');
+      
       // Compress image to reduce size
       final compressedBytes = await _compressImage(imageBytes, quality);
+      final compressedSizeInKB = compressedBytes.length / 1024;
+      print('Compressed image size: ${compressedSizeInKB.toStringAsFixed(2)} KB');
+      
+      // If still too large, reduce quality further
+      Uint8List finalBytes = compressedBytes;
+      if (compressedSizeInKB > _maxImageSizeKB) {
+        final lowerQuality = quality > 70 ? quality - 20 : 50;
+        finalBytes = await _compressImage(compressedBytes, lowerQuality);
+        print('Further compressed image size: ${(finalBytes.length / 1024).toStringAsFixed(2)} KB');
+      }
       
       // Generate unique ID
       final id = _uuid.v4();
       
       // Convert to Base64
-      final String base64Image = base64Encode(compressedBytes);
+      final String base64Image = base64Encode(finalBytes);
       
       return ProjectScreenshot(
         id: id,
@@ -57,9 +72,14 @@ class ImageUtils {
     }
   }
   
-  // Compress image bytes
+  // Compress image bytes with optimized approach
   static Future<Uint8List> _compressImage(Uint8List bytes, int quality) async {
     try {
+      // Skip compression for already small images (under 200KB)
+      if (bytes.length < 200 * 1024 && quality >= 80) {
+        return bytes;
+      }
+      
       // Use compute to run in a separate isolate for better performance
       return await compute(_compressImageImpl, {
         'bytes': bytes,
@@ -84,11 +104,11 @@ class ImageUtils {
       return bytes;
     }
     
-    // Resize image if too large (dimensions greater than 1600px)
+    // Resize image if too large (dimensions greater than 1200px)
     img.Image resizedImage = image;
-    if (image.width > 1600 || image.height > 1600) {
+    if (image.width > 1200 || image.height > 1200) {
       final int maxDimension = image.width > image.height ? image.width : image.height;
-      final double scale = 1600 / maxDimension;
+      final double scale = 1200 / maxDimension;
       resizedImage = img.copyResize(
         image,
         width: (image.width * scale).round(),
@@ -105,7 +125,7 @@ class ImageUtils {
     return compressedBytes;
   }
   
-  // Convert Base64 to Image Widget
+  // Convert Base64 to Image Widget with error handling
   static Widget base64ToImage(String base64String, {
     double? width,
     double? height,
@@ -117,7 +137,14 @@ class ImageUtils {
         return errorWidget ?? const Icon(Icons.broken_image);
       }
       
-      final Uint8List bytes = base64Decode(base64String);
+      // Handle corrupted base64 strings
+      Uint8List bytes;
+      try {
+        bytes = base64Decode(base64String);
+      } catch (e) {
+        print('Error decoding base64: $e');
+        return errorWidget ?? const Icon(Icons.broken_image, size: 40);
+      }
       
       return Image.memory(
         bytes,
@@ -125,8 +152,23 @@ class ImageUtils {
         height: height,
         fit: fit,
         errorBuilder: (context, error, stackTrace) {
+          print('Error rendering image: $error');
           return errorWidget ?? const Icon(Icons.broken_image, size: 40);
         },
+        // Add fadeIn animation for better UX
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded) {
+            return child;
+          }
+          return AnimatedOpacity(
+            opacity: frame == null ? 0 : 1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: child,
+          );
+        },
+        cacheWidth: width?.toInt(),
+        cacheHeight: height?.toInt(),
       );
     } catch (e) {
       print('Error converting base64 to image: $e');

@@ -27,6 +27,9 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
   late final AnimationController _animationController;
   late final Animation<double> _elevationAnimation;
   
+  // Error tracking
+  bool _hasRenderError = false;
+  
   @override
   void initState() {
     super.initState();
@@ -65,88 +68,92 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
       },
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedBuilder(
-          animation: _elevationAnimation,
-          builder: (context, child) => Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            clipBehavior: Clip.antiAlias,
-            elevation: _elevationAnimation.value,
-            child: child,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Screenshot section - prevent rebuild on hover by extracting to a separate widget
-              Expanded(
-                flex: 3,
-                child: _ScreenshotCarousel(
-                  project: widget.project,
-                  pageController: _pageController,
-                  currentIndex: _currentScreenshotIndex,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentScreenshotIndex = index;
-                    });
-                  },
-                  isHovered: _isHovered,
-                  onPrevious: _previousScreenshot,
-                  onNext: _nextScreenshot,
-                ),
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _elevationAnimation,
+            builder: (context, child) => Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              
-              // Project details section
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // // Title
-                      // Text(
-                      //   widget.project.title,
-                      //   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      //     fontWeight: FontWeight.bold,
-                      //   ),
-                      //   maxLines: 1,
-                      //   overflow: TextOverflow.ellipsis,
-                      // ),
-                      // const SizedBox(height: 6),
-                      
-                      // Description
-                      Expanded(
-                        child: Text(
-                          widget.project.description,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      
-                      // Technologies chips
-                      SizedBox(
-                        height: 32,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: widget.project.technologies.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: _buildTechChip(widget.project.technologies[index]),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+              clipBehavior: Clip.antiAlias,
+              elevation: _elevationAnimation.value,
+              child: child,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Screenshot section - prevent rebuild on hover by extracting to a separate widget
+                Expanded(
+                  flex: 3,
+                  child: _ScreenshotCarousel(
+                    project: widget.project,
+                    pageController: _pageController,
+                    currentIndex: _currentScreenshotIndex,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentScreenshotIndex = index;
+                      });
+                    },
+                    isHovered: _isHovered,
+                    onPrevious: _previousScreenshot,
+                    onNext: _nextScreenshot,
+                    onErrorDetected: (hasError) {
+                      if (hasError != _hasRenderError) {
+                        setState(() {
+                          _hasRenderError = hasError;
+                        });
+                      }
+                    },
                   ),
                 ),
-              ),
-            ],
+                
+                // Project details section
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Description
+                        Expanded(
+                          child: Text(
+                            widget.project.description,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        
+                        // Technologies chips
+                        SizedBox(
+                          height: 32,
+                          child: _buildTechnologyChips(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  // Build technology chips with horizontal scrolling
+  Widget _buildTechnologyChips() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: widget.project.technologies.length,
+      physics: const BouncingScrollPhysics(),
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _buildTechChip(widget.project.technologies[index]),
+        );
+      },
     );
   }
 
@@ -218,7 +225,7 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
 }
 
 // Separate widget for screenshot carousel to prevent unnecessary rebuilds
-class _ScreenshotCarousel extends StatelessWidget {
+class _ScreenshotCarousel extends StatefulWidget {
   final Project project;
   final PageController pageController;
   final int currentIndex;
@@ -226,6 +233,7 @@ class _ScreenshotCarousel extends StatelessWidget {
   final bool isHovered;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final ValueChanged<bool> onErrorDetected;
 
   const _ScreenshotCarousel({
     required this.project,
@@ -235,8 +243,16 @@ class _ScreenshotCarousel extends StatelessWidget {
     required this.isHovered,
     required this.onPrevious,
     required this.onNext,
+    required this.onErrorDetected,
   });
 
+  @override
+  State<_ScreenshotCarousel> createState() => _ScreenshotCarouselState();
+}
+
+class _ScreenshotCarouselState extends State<_ScreenshotCarousel> {
+  bool _hasError = false;
+  
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -246,20 +262,21 @@ class _ScreenshotCarousel extends StatelessWidget {
           width: double.infinity,
           height: double.infinity,
           child: PageView.builder(
-            controller: pageController,
+            controller: widget.pageController,
             itemCount: _hasScreenshots() 
-              ? project.screenshots.length 
+              ? widget.project.screenshots.length 
               : 1,
-            onPageChanged: onPageChanged,
+            onPageChanged: widget.onPageChanged,
+            physics: const BouncingScrollPhysics(),
             itemBuilder: (context, index) {
               if (_hasScreenshots()) {
                 // Show actual screenshot from the project
-                final screenshot = project.screenshots[index];
+                final screenshot = widget.project.screenshots[index];
                 return ImageUtils.base64ToImage(
                   screenshot.imageBase64,
                   width: double.infinity,
                   height: double.infinity,
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                   errorWidget: _buildFallbackImage(context),
                 );
               } else {
@@ -291,29 +308,28 @@ class _ScreenshotCarousel extends StatelessWidget {
         ),
         
         // Project name overlay at bottom
-        if (project.screenshots.isNotEmpty)
-          Positioned(
-            bottom: 15,
-            left: 20,
-            right: 20,
-            child: Text(
-              project.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(
-                    offset: Offset(0, 1),
-                    blurRadius: 3.0,
-                    color: Color.fromARGB(128, 0, 0, 0),
-                  ),
-                ],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        Positioned(
+          bottom: 15,
+          left: 20,
+          right: 20,
+          child: Text(
+            widget.project.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(
+                  offset: Offset(0, 1),
+                  blurRadius: 3.0,
+                  color: Color.fromARGB(128, 0, 0, 0),
+                ),
+              ],
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+        ),
         
         // Left arrow navigation button - only show if we have multiple screenshots
         if (_hasMultipleScreenshots())
@@ -323,14 +339,14 @@ class _ScreenshotCarousel extends StatelessWidget {
             bottom: 0,
             child: Center(
               child: AnimatedOpacity(
-                opacity: isHovered ? 1.0 : 0.0,
+                opacity: widget.isHovered ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),
                 child: CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.black.withOpacity(0.3),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                    onPressed: onPrevious,
+                    onPressed: widget.onPrevious,
                     iconSize: 20,
                     padding: EdgeInsets.zero,
                   ),
@@ -347,14 +363,14 @@ class _ScreenshotCarousel extends StatelessWidget {
             bottom: 0,
             child: Center(
               child: AnimatedOpacity(
-                opacity: isHovered ? 1.0 : 0.0,
+                opacity: widget.isHovered ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),
                 child: CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.black.withOpacity(0.3),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                    onPressed: onNext,
+                    onPressed: widget.onNext,
                     iconSize: 20,
                     padding: EdgeInsets.zero,
                   ),
@@ -368,15 +384,86 @@ class _ScreenshotCarousel extends StatelessWidget {
 
   // Fallback image when screenshots aren't available
   Widget _buildFallbackImage(BuildContext context) {
+    // Notify parent about error if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onErrorDetected(true);
+    });
+    
+    // Use thumbnail as fallback if available
+    if (widget.project.thumbnailUrl.isNotEmpty) {
+      return Image.network(
+        widget.project.thumbnailUrl,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          // If network image fails, fall back to placeholder
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.image,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.project.title,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+    
+    // Default placeholder
     return Container(
       width: double.infinity,
       height: double.infinity,
       color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
       child: Center(
-        child: Icon(
-          Icons.image,
-          size: 64,
-          color: Theme.of(context).colorScheme.primary,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.image,
+              size: 48,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.project.title,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -384,12 +471,12 @@ class _ScreenshotCarousel extends StatelessWidget {
 
   // Check if the project has valid screenshots
   bool _hasScreenshots() {
-    return project.screenshots.isNotEmpty &&
-        project.screenshots.first.imageBase64.isNotEmpty;
+    return widget.project.screenshots.isNotEmpty &&
+        widget.project.screenshots.first.imageBase64.isNotEmpty;
   }
   
   // Check if the project has multiple screenshots
   bool _hasMultipleScreenshots() {
-    return project.screenshots.length > 1;
+    return widget.project.screenshots.length > 1;
   }
 }

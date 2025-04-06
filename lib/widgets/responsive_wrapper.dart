@@ -56,9 +56,11 @@ extension ResponsiveExtension on BuildContext {
     T? desktop,
     T? largeDesktop,
   }) {
-    if (isLargeDesktop && largeDesktop != null) return largeDesktop;
-    if (isDesktop && desktop != null) return desktop;
-    if (isTablet && tablet != null) return tablet;
+    final width = MediaQuery.of(this).size.width;
+    
+    if (width >= ScreenSize.largeDesktop && largeDesktop != null) return largeDesktop;
+    if (width >= ScreenSize.desktop && desktop != null) return desktop;
+    if (width >= ScreenSize.tablet && tablet != null) return tablet;
     return mobile;
   }
 
@@ -68,6 +70,14 @@ extension ResponsiveExtension on BuildContext {
     tablet: const EdgeInsets.all(24),
     desktop: const EdgeInsets.all(32),
     largeDesktop: const EdgeInsets.all(48),
+  );
+
+  /// Get responsive horizontal padding
+  EdgeInsets get responsiveHorizontalPadding => responsive<EdgeInsets>(
+    mobile: const EdgeInsets.symmetric(horizontal: 16),
+    tablet: const EdgeInsets.symmetric(horizontal: 24),
+    desktop: const EdgeInsets.symmetric(horizontal: 32),
+    largeDesktop: const EdgeInsets.symmetric(horizontal: 48),
   );
 
   /// Get responsive margin
@@ -85,6 +95,22 @@ extension ResponsiveExtension on BuildContext {
     desktop: 1200,
     largeDesktop: 1440,
   );
+  
+  /// Get responsive font size for headings
+  double get responsiveHeadingSize => responsive<double>(
+    mobile: 24,
+    tablet: 28,
+    desktop: 32,
+    largeDesktop: 36,
+  );
+  
+  /// Get responsive font size for body text
+  double get responsiveBodySize => responsive<double>(
+    mobile: 14,
+    tablet: 15,
+    desktop: 16,
+    largeDesktop: 16,
+  );
 }
 
 /// Container that sets max width for content based on screen size
@@ -92,24 +118,125 @@ class ResponsiveContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final bool centerContent;
+  final double? minHeight;
+  final Color? backgroundColor;
+  final BoxDecoration? decoration;
 
   const ResponsiveContainer({
     super.key,
     required this.child,
     this.padding,
     this.centerContent = true,
+    this.minHeight,
+    this.backgroundColor,
+    this.decoration,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        padding: padding ?? context.responsivePadding,
+        width: double.infinity,
         constraints: BoxConstraints(
           maxWidth: context.contentMaxWidth,
+          minHeight: minHeight ?? 0,
         ),
-        child: child,
+        padding: padding ?? context.responsivePadding,
+        decoration: decoration,
+        color: backgroundColor,
+        child: centerContent ? Center(child: child) : child,
       ),
+    );
+  }
+}
+
+/// SafeArea-aware ResponsiveContainer for sections
+class ResponsiveSection extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final Color? backgroundColor;
+  final BoxDecoration? decoration;
+  final double? minHeight;
+
+  const ResponsiveSection({
+    super.key,
+    required this.child,
+    this.padding,
+    this.backgroundColor,
+    this.decoration,
+    this.minHeight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        color: backgroundColor,
+        decoration: decoration,
+        constraints: BoxConstraints(
+          minHeight: minHeight ?? 0,
+        ),
+        child: ResponsiveContainer(
+          padding: padding,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Grid with responsive column count
+class ResponsiveGrid extends StatelessWidget {
+  final List<Widget> children;
+  final double spacing;
+  final double runSpacing;
+  final int mobileCrossAxisCount;
+  final int tabletCrossAxisCount;
+  final int desktopCrossAxisCount;
+  final int largeDesktopCrossAxisCount;
+  final double childAspectRatio;
+
+  const ResponsiveGrid({
+    super.key,
+    required this.children,
+    this.spacing = 16,
+    this.runSpacing = 16,
+    this.mobileCrossAxisCount = 1,
+    this.tabletCrossAxisCount = 2,
+    this.desktopCrossAxisCount = 3,
+    this.largeDesktopCrossAxisCount = 4,
+    this.childAspectRatio = 1.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount;
+        
+        if (constraints.maxWidth >= ScreenSize.largeDesktop) {
+          crossAxisCount = largeDesktopCrossAxisCount;
+        } else if (constraints.maxWidth >= ScreenSize.desktop) {
+          crossAxisCount = desktopCrossAxisCount;
+        } else if (constraints.maxWidth >= ScreenSize.tablet) {
+          crossAxisCount = tabletCrossAxisCount;
+        } else {
+          crossAxisCount = mobileCrossAxisCount;
+        }
+        
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: runSpacing,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: children.length,
+          itemBuilder: (context, index) => children[index],
+        );
+      },
     );
   }
 }

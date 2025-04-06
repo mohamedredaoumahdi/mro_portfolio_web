@@ -19,6 +19,11 @@ class ProjectDetailDialog extends StatefulWidget {
 }
 
 class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
+  int _currentScreenshotIndex = 0;
+  final PageController _pageController = PageController();
+  bool _isLoading = false;
+  bool _videoLaunchError = false;
+
   @override
   void initState() {
     super.initState();
@@ -33,36 +38,54 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
       }
     });
   }
+  
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+    
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Container(
-        width: double.infinity, // Will be constrained by Dialog
-        color: Colors.white,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildScreenshotsSection(context),
-                    _buildDescriptionSection(context),
-                    _buildTechnologiesSection(context),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+      // Constrain dialog size for better appearance
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isSmallScreen ? screenSize.width * 0.95 : 900,
+          maxHeight: isSmallScreen ? screenSize.height * 0.95 : 700,
+        ),
+        child: Container(
+          width: double.infinity,
+          color: Theme.of(context).cardColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildScreenshotsSection(context),
+                          _buildDescriptionSection(context),
+                          _buildTechnologiesSection(context),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -75,28 +98,20 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            widget.project.title,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Text(
+              widget.project.title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Row(
             children: [
-              ElevatedButton.icon(
-                onPressed: () => launchURL(
-                  'https://www.youtube.com/watch?v=${widget.project.youtubeVideoId}',
-                ),
-                icon: const Icon(Icons.play_circle_filled, color: Colors.white),
-                label: const Text('See the review', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
+              _buildWatchButton(context),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.of(context).pop(),
@@ -107,8 +122,64 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
       ),
     );
   }
+  
+  // Watch button with loading and error states
+  Widget _buildWatchButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: _isLoading ? null : () => _launchVideoUrl(context),
+      icon: _isLoading 
+        ? const SizedBox(
+            width: 20, 
+            height: 20, 
+            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+          )
+        : const Icon(Icons.play_circle_filled, color: Colors.white),
+      label: Text(
+        _videoLaunchError ? 'Try Again' : 'See the review', 
+        style: const TextStyle(color: Colors.white)
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _videoLaunchError ? Colors.red : Colors.blue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+  
+  // Launch the YouTube video URL
+  Future<void> _launchVideoUrl(BuildContext context) async {
+    if (widget.project.youtubeVideoId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No video available for this project'))
+      );
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+      _videoLaunchError = false;
+    });
+    
+    try {
+      final url = 'https://www.youtube.com/watch?v=${widget.project.youtubeVideoId}';
+      await launchURL(url);
+    } catch (e) {
+      setState(() {
+        _videoLaunchError = true;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error opening video: ${e.toString()}'))
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
-  // Screenshots section with horizontal row of images
+  // Screenshots section with horizontal row of images and paging
   Widget _buildScreenshotsSection(BuildContext context) {
     final validScreenshots = _getValidScreenshots();
     if (validScreenshots.isEmpty) {
@@ -132,18 +203,103 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
           ),
           SizedBox(
             height: 400, // Fixed height for screenshots
-            child: Row(
+            child: Stack(
               children: [
-                Expanded(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: validScreenshots.length,
-                    itemBuilder: (context, index) {
-                      final screenshot = validScreenshots[index];
-                      return _buildScreenshotItem(screenshot);
-                    },
-                  ),
+                // Screenshots PageView
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: validScreenshots.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentScreenshotIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return Center(
+                      child: _buildScreenshotItem(validScreenshots[index]),
+                    );
+                  },
                 ),
+                
+                // Pagination indicators
+                if (validScreenshots.length > 1)
+                  Positioned(
+                    bottom: 16,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        validScreenshots.length,
+                        (index) => Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentScreenshotIndex == index
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                // Navigation arrows
+                if (validScreenshots.length > 1) ...[
+                  // Left arrow
+                  Positioned(
+                    left: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.black.withOpacity(0.3),
+                        child: IconButton(
+                          icon: const Icon(Icons.chevron_left, color: Colors.white),
+                          onPressed: () {
+                            final prevIndex = _currentScreenshotIndex == 0
+                                ? validScreenshots.length - 1
+                                : _currentScreenshotIndex - 1;
+                            
+                            _pageController.animateToPage(
+                              prevIndex,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOut,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Right arrow
+                  Positioned(
+                    right: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.black.withOpacity(0.3),
+                        child: IconButton(
+                          icon: const Icon(Icons.chevron_right, color: Colors.white),
+                          onPressed: () {
+                            final nextIndex = (_currentScreenshotIndex + 1) % validScreenshots.length;
+                            
+                            _pageController.animateToPage(
+                              nextIndex,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOut,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -155,9 +311,9 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
   // Single screenshot item with caption
   Widget _buildScreenshotItem(ProjectScreenshot screenshot) {
     return Container(
-      width: 200, // Fixed width for each screenshot
-      margin: const EdgeInsets.only(left: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
@@ -234,10 +390,25 @@ class _ProjectDetailDialogState extends State<ProjectDetailDialog> {
 
   // Tech chip with colored background
   Widget _buildTechChip(String tech) {
+    // Choose different colors based on technology
+    Color chipColor;
+    final lcTech = tech.toLowerCase();
+    if (lcTech.contains('flutter')) {
+      chipColor = const Color(0xFF0175C2); // Flutter blue
+    } else if (lcTech.contains('firebase')) {
+      chipColor = const Color(0xFFFFCA28); // Firebase yellow
+    } else if (lcTech.contains('ios') || lcTech.contains('swift')) {
+      chipColor = const Color(0xFF999999); // iOS gray
+    } else if (lcTech.contains('android')) {
+      chipColor = const Color(0xFF3DDC84); // Android green
+    } else {
+      chipColor = Theme.of(context).colorScheme.primary; // Default to theme primary color
+    }
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.indigo,
+        color: chipColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

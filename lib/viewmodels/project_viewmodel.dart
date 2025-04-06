@@ -9,19 +9,27 @@ import '../config/app_config.dart';
 class ProjectViewModel extends ChangeNotifier {
   List<Project> _projects = [];
   Project? _selectedProject;
-  bool _isLoading = true;
+  bool _isLoading = false; // Start as false, only set to true when explicitly loading
   String? _errorMessage;
   StreamSubscription<QuerySnapshot>? _subscription;
+  bool _initialized = false;
 
   // Getters
   List<Project> get projects => _projects;
   Project? get selectedProject => _selectedProject;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get initialized => _initialized;
 
-  // Constructor
-  ProjectViewModel() {
-    loadProjects();
+  // Constructor - doesn't auto-load data
+  ProjectViewModel();
+
+  // Initialize method to be called after widget build
+  Future<void> initialize() async {
+    if (!_initialized && !_isLoading) {
+      await loadProjects();
+      _initialized = true;
+    }
   }
 
   // Check if Firebase is available
@@ -37,7 +45,10 @@ class ProjectViewModel extends ChangeNotifier {
   // Load projects either from Firebase or local config
   Future<void> loadProjects() async {
     try {
+      if (_isLoading) return; // Prevent concurrent loads
+      
       _isLoading = true;
+      _errorMessage = null;
       notifyListeners();
 
       // Simulate network delay in debug mode
@@ -73,61 +84,69 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  // Update to the _setupRealTimeListener method in ProjectViewModel
-
   void _setupRealTimeListener() {
     print('Setting up real-time listener for projects...');
 
     // Cancel existing subscription if any
     _subscription?.cancel();
 
-    // Set up listener
-    _subscription = FirebaseFirestore.instance
-        .collection('projects')
-        .orderBy('order')
-        .snapshots()
-        .listen((snapshot) {
-      print('Real-time update for projects: ${snapshot.docs.length} items');
+    // Set up listener with error handling
+    try {
+      _subscription = FirebaseFirestore.instance
+          .collection('projects')
+          .orderBy('order')
+          .snapshots()
+          .listen((snapshot) {
+        print('Real-time update for projects: ${snapshot.docs.length} items');
 
-      final List<Project> updatedProjects = snapshot.docs.map((doc) {
-        final data = doc.data();
+        final List<Project> updatedProjects = snapshot.docs.map((doc) {
+          final data = doc.data();
 
-        // Handle screenshots array in the project data
-        List<ProjectScreenshot> screenshots = [];
-        if (data['screenshots'] != null && data['screenshots'] is List) {
-          screenshots = (data['screenshots'] as List).map((screenshotData) {
-            if (screenshotData is Map<String, dynamic>) {
-              return ProjectScreenshot.fromMap(screenshotData);
-            }
-            return ProjectScreenshot(id: '', imageBase64: '');
-          }).toList();
-        }
+          // Handle screenshots array in the project data
+          List<ProjectScreenshot> screenshots = [];
+          if (data['screenshots'] != null && data['screenshots'] is List) {
+            screenshots = (data['screenshots'] as List).map((screenshotData) {
+              if (screenshotData is Map<String, dynamic>) {
+                return ProjectScreenshot.fromMap(screenshotData);
+              }
+              return ProjectScreenshot(id: '', imageBase64: '');
+            }).toList();
+          }
 
-        return Project(
-          id: doc.id,
-          title: data['title'] ?? '',
-          description: data['description'] ?? '',
-          technologies: List<String>.from(data['technologies'] ?? []),
-          youtubeVideoId: data['youtubeVideoId'] ?? '',
-          thumbnailUrl: data['thumbnailUrl'] ?? '',
-          date: data['createdAt'] != null
-              ? (data['createdAt'] as Timestamp).toDate()
-              : DateTime.now(),
-          screenshots: screenshots, // Add the screenshots field
-        );
-      }).toList();
+          return Project(
+            id: doc.id,
+            title: data['title'] ?? '',
+            description: data['description'] ?? '',
+            technologies: List<String>.from(data['technologies'] ?? []),
+            youtubeVideoId: data['youtubeVideoId'] ?? '',
+            thumbnailUrl: data['thumbnailUrl'] ?? '',
+            date: data['createdAt'] != null
+                ? (data['createdAt'] as Timestamp).toDate()
+                : DateTime.now(),
+            screenshots: screenshots, // Add the screenshots field
+          );
+        }).toList();
 
-      _projects = updatedProjects;
-      _isLoading = false;
-      _errorMessage = null;
-      notifyListeners();
-    }, onError: (e) {
-      print('Error in real-time listener: $e');
-      _errorMessage = 'Error loading projects: $e';
+        _projects = updatedProjects;
+        _isLoading = false;
+        _errorMessage = null;
+        notifyListeners();
+      }, onError: (e) {
+        print('Error in real-time listener: $e');
+        _errorMessage = 'Error loading projects: $e';
+        _loadFromAppConfig();
+        _isLoading = false;
+        notifyListeners();
+      }, onDone: () {
+        print('Projects listener closed');
+      });
+    } catch (e) {
+      print('Exception setting up projects listener: $e');
+      _errorMessage = 'Error setting up projects listener: $e';
       _loadFromAppConfig();
       _isLoading = false;
       notifyListeners();
-    });
+    }
   }
 
   // Load data from AppConfig as fallback
@@ -233,6 +252,14 @@ class ProjectViewModel extends ChangeNotifier {
     return _projects
         .where((project) => project.technologies.contains(technology))
         .toList();
+  }
+
+  // Refresh projects - force reload
+  Future<void> refreshProjects() async {
+    _subscription?.cancel();
+    _subscription = null;
+    _isLoading = false;
+    await loadProjects();
   }
 
   @override

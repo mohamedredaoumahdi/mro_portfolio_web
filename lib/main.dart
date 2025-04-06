@@ -24,21 +24,29 @@ bool useFirebase = false;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase with timeout and error handling
   try {
-    // Set a timeout for Firebase initialization
-    bool firebaseInitialized = false;
-    
-    // Create a timer to enforce a timeout
-    Timer? timeoutTimer;
-    timeoutTimer = Timer(const Duration(seconds: 10), () {
-      if (!firebaseInitialized) {
-        print('Firebase initialization timed out, continuing without Firebase');
-        timeoutTimer = null;
-        runAppWithoutFirebase();
-      }
-    });
-    
+    // Try initializing Firebase with proper error handling
+    await initializeFirebaseWithTimeout();
+  } catch (e) {
+    print('Failed to initialize Firebase: $e');
+    runAppWithoutFirebase();
+  }
+}
+
+// Initialize Firebase with timeout and proper error handling
+Future<void> initializeFirebaseWithTimeout() async {
+  // Create a completer to properly handle the initialization
+  Completer<bool> initCompleter = Completer<bool>();
+  
+  // Set a timeout for Firebase initialization
+  Timer? timeoutTimer = Timer(const Duration(seconds: 10), () {
+    if (!initCompleter.isCompleted) {
+      print('Firebase initialization timed out, continuing without Firebase');
+      initCompleter.complete(false);
+    }
+  });
+  
+  try {
     // Try to initialize Firebase
     await Firebase.initializeApp(
       options: const FirebaseOptions(
@@ -51,14 +59,22 @@ void main() async {
       ),
     );
     
-    // Firebase initialized successfully
-    firebaseInitialized = true;
-    useFirebase = true;
-    
-    // Cancel the timeout timer if it still exists
-    timeoutTimer?.cancel();
-    timeoutTimer = null;
-    
+    if (!initCompleter.isCompleted) {
+      useFirebase = true;
+      initCompleter.complete(true);
+    }
+  } catch (e) {
+    print('Error initializing Firebase: $e');
+    if (!initCompleter.isCompleted) {
+      initCompleter.complete(false);
+    }
+  }
+  
+  // Wait for either successful initialization or timeout
+  bool firebaseInitialized = await initCompleter.future;
+  timeoutTimer.cancel();
+  
+  if (firebaseInitialized) {
     // Initialize Analytics if available
     try {
       final analytics = FirebaseAnalytics.instance;
@@ -79,9 +95,7 @@ void main() async {
     // Continue with loading fonts and running the app
     await loadFonts();
     runApp(const MyApp());
-    
-  } catch (e) {
-    print('Failed to initialize Firebase: $e');
+  } else {
     runAppWithoutFirebase();
   }
 }
@@ -140,14 +154,22 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Utility function for launching URLs
+// Utility function for launching URLs with improved error handling
 Future<void> launchURL(String url) async {
-  if (await canLaunchUrlString(url)) {
-    await launchUrlString(
-      url,
-      mode: LaunchMode.externalApplication,
-    );
-  } else {
-    throw 'Could not launch $url';
+  // Make sure URL has protocol
+  final urlToLaunch = url.startsWith('http') ? url : 'https://$url';
+  
+  try {
+    if (await canLaunchUrlString(urlToLaunch)) {
+      await launchUrlString(
+        urlToLaunch,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      throw 'Could not launch $urlToLaunch';
+    }
+  } catch (e) {
+    print('Error launching URL: $e');
+    // You could also show a snackbar or dialog here to inform the user
   }
 }

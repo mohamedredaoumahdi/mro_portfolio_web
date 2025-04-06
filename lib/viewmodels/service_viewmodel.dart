@@ -8,18 +8,26 @@ import '../config/app_config.dart';
 
 class ServiceViewModel extends ChangeNotifier {
   List<Service> _services = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
   String? _errorMessage;
   StreamSubscription<QuerySnapshot>? _subscription;
+  bool _initialized = false;
 
   // Getters
   List<Service> get services => _services;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get initialized => _initialized;
 
-  // Constructor
-  ServiceViewModel() {
-    loadServices();
+  // Constructor - doesn't auto-load data
+  ServiceViewModel();
+
+  // Initialize method to be called after widget build
+  Future<void> initialize() async {
+    if (!_initialized && !_isLoading) {
+      await loadServices();
+      _initialized = true;
+    }
   }
 
   // Check if Firebase is available
@@ -34,8 +42,11 @@ class ServiceViewModel extends ChangeNotifier {
 
   // Load services either from Firebase or local config
   Future<void> loadServices() async {
+    if (_isLoading) return; // Prevent concurrent loads
+
     try {
       _isLoading = true;
+      _errorMessage = null;
       notifyListeners();
       
       // Simulate network delay in debug mode
@@ -77,35 +88,53 @@ class ServiceViewModel extends ChangeNotifier {
     // Cancel existing subscription if any
     _subscription?.cancel();
     
-    // Set up listener
-    _subscription = FirebaseFirestore.instance
-        .collection('services')
-        .orderBy('order')
-        .snapshots()
-        .listen((snapshot) {
-          print('Real-time update for services: ${snapshot.docs.length} items');
-          
-          final List<Service> updatedServices = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return Service(
-              id: doc.id,
-              title: data['title'] ?? '',
-              description: data['description'] ?? '',
-              iconPath: data['iconName'] ?? '',
-            );
-          }).toList();
-          
-          _services = updatedServices;
-          _isLoading = false;
-          _errorMessage = null;
-          notifyListeners();
-        }, onError: (e) {
-          print('Error in real-time listener: $e');
-          _errorMessage = 'Error loading services: $e';
+    try {
+      // Set up listener with error handling
+      _subscription = FirebaseFirestore.instance
+          .collection('services')
+          .orderBy('order')
+          .snapshots()
+          .listen((snapshot) {
+            print('Real-time update for services: ${snapshot.docs.length} items');
+            
+            final List<Service> updatedServices = snapshot.docs.map((doc) {
+              final data = doc.data();
+              return Service(
+                id: doc.id,
+                title: data['title'] ?? '',
+                description: data['description'] ?? '',
+                iconPath: data['iconName'] ?? '',
+              );
+            }).toList();
+            
+            _services = updatedServices;
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          }, onError: (e) {
+            print('Error in real-time listener: $e');
+            _errorMessage = 'Error loading services: $e';
+            _loadFromAppConfig();
+            _isLoading = false;
+            notifyListeners();
+          });
+      
+      // Set timeout for initial data fetch
+      Timer(const Duration(seconds: 5), () {
+        if (_isLoading) {
+          print('Firebase services data fetch timed out, falling back to AppConfig');
           _loadFromAppConfig();
           _isLoading = false;
           notifyListeners();
-        });
+        }
+      });
+    } catch (e) {
+      print('Exception setting up services listener: $e');
+      _errorMessage = 'Error setting up services listener: $e';
+      _loadFromAppConfig();
+      _isLoading = false;
+      notifyListeners();
+    }
   }
   
   // Load data from AppConfig as fallback
@@ -116,6 +145,24 @@ class ServiceViewModel extends ChangeNotifier {
       servicesList.length,
       (index) => Service.fromConfig(index, servicesList[index]),
     );
+  }
+  
+  // Get service by ID
+  Service? getServiceById(String id) {
+    try {
+      return _services.firstWhere((service) => service.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  // Refresh services - force reload
+  Future<void> refreshServices() async {
+    _subscription?.cancel();
+    _subscription = null;
+    _isLoading = false;
+    _initialized = false;
+    await loadServices();
   }
   
   @override

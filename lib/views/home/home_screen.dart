@@ -26,19 +26,50 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<GlobalKey> _sectionKeys = List.generate(4, (_) => GlobalKey());
+  bool _isInitialized = false;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     
-    // Force profile data refresh after widget is built
+    // Initialize data after widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-        profileViewModel.loadPersonalInfo();
-        print("FORCE REFRESH: Explicitly loading profile data in initState");
-      }
+      _initializeData();
     });
+  }
+
+  Future<void> _initializeData() async {
+    if (!mounted || _isInitialized) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      // Initialize all ViewModels
+      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+      final projectViewModel = Provider.of<ProjectViewModel>(context, listen: false);
+      final serviceViewModel = Provider.of<ServiceViewModel>(context, listen: false);
+      
+      // Load data in parallel
+      await Future.wait([
+        profileViewModel.initialize(),
+        projectViewModel.initialize(),
+        serviceViewModel.initialize(),
+      ]);
+      
+      setState(() {
+        _isInitialized = true;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load data: $e';
+      });
+      print('HomeScreen initialization error: $e');
+    }
   }
 
   @override
@@ -58,6 +89,41 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshData() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
+      final projectViewModel = Provider.of<ProjectViewModel>(context, listen: false);
+      final serviceViewModel = Provider.of<ServiceViewModel>(context, listen: false);
+      
+      // Refresh all data
+      await Future.wait([
+        profileViewModel.refreshData(),
+        projectViewModel.refreshProjects(),
+        serviceViewModel.loadServices(),
+      ]);
+      
+      setState(() {
+        _isLoading = false;
+        _errorMessage = null;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data refreshed successfully'))
+      );
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to refresh data: $e';
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to refresh data: $e'))
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get current theme mode
@@ -66,15 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
     
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Manual refresh button for testing
-          Provider.of<ProfileViewModel>(context, listen: false).loadPersonalInfo();
-          setState(() {}); // Force UI update
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Refreshing profile data...'))
-          );
-        },
-        child: const Icon(Icons.refresh),
+        onPressed: _refreshData,
+        tooltip: 'Refresh data',
+        child: _isLoading 
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Icon(Icons.refresh),
       ),
       body: CustomScrollView(
         controller: _scrollController,
@@ -91,6 +153,26 @@ class _HomeScreenState extends State<HomeScreen> {
               onNavItemTapped: _scrollToSection,
             ),
           ),
+          
+          // Error message if any
+          if (_errorMessage != null)
+            SliverToBoxAdapter(
+              child: Container(
+                color: Colors.red.withOpacity(0.1),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red))),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.red),
+                      onPressed: () => setState(() => _errorMessage = null),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           
           // Hero Section
           SliverToBoxAdapter(
@@ -174,8 +256,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeroContent(BuildContext context) {
     return Consumer<ProfileViewModel>(
       builder: (context, profileViewModel, _) {
-        // Debug print to verify data
-        print("HERO CONTENT BUILD: Using title '${profileViewModel.title}'");
+        final name = profileViewModel.name;
+        final title = profileViewModel.title;
+        final aboutMe = profileViewModel.aboutMe;
         
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              "I'm ${profileViewModel.name}",
+              "I'm $name",
               style: context.responsive<TextStyle>(
                 mobile: Theme.of(context).textTheme.displaySmall!,
                 tablet: Theme.of(context).textTheme.displayMedium!,
@@ -198,11 +281,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 10),
             AnimatedTextKit(
-              key: ValueKey(profileViewModel.title),
+              key: ValueKey(title),
               animatedTexts: [
                 TypewriterAnimatedText(
-                  // Using profileViewModel.title directly
-                  profileViewModel.title, 
+                  title, 
                   textStyle: context.responsive<TextStyle>(
                     mobile: Theme.of(context).textTheme.headlineSmall!.copyWith(
                         color: Theme.of(context).colorScheme.secondary),
@@ -226,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               child: Text(
-                profileViewModel.aboutMe,
+                aboutMe,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
