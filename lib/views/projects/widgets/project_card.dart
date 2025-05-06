@@ -90,7 +90,7 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
           children: [
             // YouTube Video container with exact dimensions
             SizedBox(
-              width: 415,
+              width: double.infinity,
               height: 290,
               child: YoutubePlayer(
                 controller: _youtubeController,
@@ -125,7 +125,7 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
                   
                   // Details button with NO space below it
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 0),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Container(
                       width: double.infinity,
                       height: 35,
