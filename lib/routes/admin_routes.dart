@@ -14,6 +14,7 @@ class AdminRoutes {
   static const String services = '$adminPrefix/services';
   static const String profile = '$adminPrefix/profile';
   static const String socialLinks = '$adminPrefix/social';
+  static const String messages = '$adminPrefix/messages';
   static const String analytics = '$adminPrefix/analytics';
   static const String settings = '$adminPrefix/settings';
 
@@ -26,13 +27,15 @@ class AdminRoutes {
       services: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 2)),
       profile: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 3)),
       socialLinks: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 4)),
-      analytics: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 5)),
-      settings: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 6)),
+      messages: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 5)),
+      analytics: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 6)),
+      settings: (context) => _protectRoute(const AdminDashboardScreen(initialTabIndex: 7)),
     };
   }
 
   // Protect routes with authentication check
   static Widget _protectRoute(Widget destination) {
+    // Implementation unchanged
     return Builder(
       builder: (context) {
         final authService = Provider.of<AuthService>(context);

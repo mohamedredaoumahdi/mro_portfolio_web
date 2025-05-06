@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
+import 'package:portfolio_website/viewmodels/social_links_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -133,6 +134,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ContactViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+        ChangeNotifierProvider(create: (_) => SocialLinksViewModel()),
         ChangeNotifierProvider(create: (_) => ActivityViewModel()),
         ChangeNotifierProvider(create: (_) => AuthService()),
       ],

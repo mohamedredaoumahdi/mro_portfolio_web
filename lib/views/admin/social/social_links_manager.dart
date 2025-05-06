@@ -154,66 +154,70 @@ class _SocialLinksManagerScreenState extends State<SocialLinksManagerScreen> {
   }
 
   // Save social links
-  Future<void> _saveSocialLinks() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  // In the SocialLinksManagerScreen (_saveSocialLinks method)
+// Replace the social links data creation with this corrected version:
+
+Future<void> _saveSocialLinks() async {
+  if (!_formKey.currentState!.validate()) {
+    return;
+  }
+  
+  setState(() {
+    _isSaving = true;
+    _errorMessage = null;
+    _successMessage = null;
+  });
+  
+  try {
+    // Create the social links data object without timestamp
+    final socialLinks = {
+      'github': _githubController.text,
+      'linkedin': _linkedinController.text,
+      'fiverr': _fiverrController.text,
+      'upwork': _upworkController.text,
+      'freelancer': _freelancerController.text,
+      'instagram': _instagramController.text,
+      'facebook': _facebookController.text,
+      // DON'T add updatedAt here - let Firestore handle it
+    };
+    
+    final firestoreService = FirestoreService.instance;
+    await firestoreService.updateSocialLinks(socialLinks);
+
+    // Log the activity 
+    final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+    await activityViewModel.logActivity(
+      type: 'edit',
+      message: 'You updated your social media links',
+      entityId: 'social_links',
+      metadata: {
+        'github': _githubController.text.isNotEmpty,
+        'linkedin': _linkedinController.text.isNotEmpty,
+        'fiverr': _fiverrController.text.isNotEmpty,
+        'upwork': _upworkController.text.isNotEmpty
+      },
+    );
     
     setState(() {
-      _isSaving = true;
-      _errorMessage = null;
-      _successMessage = null;
+      _successMessage = 'Social links updated successfully!';
+      _isSaving = false;
     });
     
-    try {
-      final socialLinks = {
-        'fiverr': _fiverrController.text,
-        'upwork': _upworkController.text,
-        'freelancer': _freelancerController.text,
-        'instagram': _instagramController.text,
-        'facebook': _facebookController.text,
-        'github': _githubController.text,
-        'linkedin': _linkedinController.text,
-        'updatedAt': DateTime.now().toIso8601String(),
-      };
-      
-      final firestoreService = FirestoreService.instance;
-      await firestoreService.updateSocialLinks(socialLinks);
-
-      // Log the activity 
-      final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
-      await activityViewModel.logActivity(
-        type: 'edit',
-        message: 'You updated your social media links',
-        entityId: 'social_links',
-        metadata: {
-          'github': _githubController.text.isNotEmpty,
-          'linkedin': _linkedinController.text.isNotEmpty,
-          'fiverr': _fiverrController.text.isNotEmpty,
-          'upwork': _upworkController.text.isNotEmpty
-        },
-      );
-      
-      setState(() {
-        _successMessage = 'Social links updated successfully!';
-        _isSaving = false;
-      });
-      
-      // Clear success message after 3 seconds
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _successMessage = null;
-          });
-        }
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to save social links: ${e.toString()}';
-        _isSaving = false;
-      });
-    }
+    // Clear success message after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _successMessage = null;
+        });
+      }
+    });
+  } catch (e) {
+    setState(() {
+      _errorMessage = 'Failed to save social links: ${e.toString()}';
+      _isSaving = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {

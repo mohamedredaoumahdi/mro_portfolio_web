@@ -257,7 +257,9 @@ class _ContactFormState extends State<ContactForm> {
   }
 
   Widget _buildSuccessMessage(ContactViewModel viewModel) {
-    return Container(
+  return Center(  // Added Center widget here
+    child: Container(
+      constraints: const BoxConstraints(maxWidth: 500),  // Optional: constrain max width
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.green.withOpacity(0.1),
@@ -308,8 +310,9 @@ class _ContactFormState extends State<ContactForm> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _submitForm(ContactViewModel viewModel) {
     // Mark all fields as touched to trigger validation
