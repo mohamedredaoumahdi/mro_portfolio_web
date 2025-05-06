@@ -1,5 +1,7 @@
 // lib/widgets/skeleton_loaders/project_skeleton.dart
 import 'package:flutter/material.dart';
+import 'dart:ui_web';
+
 
 class ProjectSkeleton extends StatefulWidget {
   const ProjectSkeleton({super.key});
@@ -40,51 +42,47 @@ class _ProjectSkeletonState extends State<ProjectSkeleton>
     return AnimatedBuilder(
       animation: _colorAnimation,
       builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
+        return Card(
+          margin: const EdgeInsets.only(bottom: 0),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
+            side: BorderSide(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              width: 2,
+            ),
           ),
+          clipBehavior: Clip.antiAlias,
+          elevation: 2,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Image placeholder
-              Container(
-                height: 180,
-                width: double.infinity,
-                decoration: BoxDecoration(
+              // Thumbnail placeholder with exact dimensions
+              SizedBox(
+                width: 415,
+                height: 290,
+                child: Container(
                   color: _colorAnimation.value,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.image,
-                    size: 40,
-                    color: Colors.grey.shade600,
+                  child: Center(
+                    child: Icon(
+                      Icons.play_circle_outline,
+                      size: 64,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
               ),
               
-              // Content placeholders
+              // Content padding container
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Title placeholder
                     Container(
-                      width: 150,
-                      height: 20,
+                      width: 200,
+                      height: 24,
                       decoration: BoxDecoration(
                         color: _colorAnimation.value,
                         borderRadius: BorderRadius.circular(4),
@@ -92,10 +90,10 @@ class _ProjectSkeletonState extends State<ProjectSkeleton>
                     ),
                     const SizedBox(height: 16),
                     
-                    // Description placeholders
+                    // Description placeholders - four lines
                     Container(
                       width: double.infinity,
-                      height: 10,
+                      height: 12,
                       decoration: BoxDecoration(
                         color: _colorAnimation.value,
                         borderRadius: BorderRadius.circular(4),
@@ -104,7 +102,25 @@ class _ProjectSkeletonState extends State<ProjectSkeleton>
                     const SizedBox(height: 8),
                     Container(
                       width: double.infinity,
-                      height: 10,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _colorAnimation.value,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _colorAnimation.value,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 200,
+                      height: 12,
                       decoration: BoxDecoration(
                         color: _colorAnimation.value,
                         borderRadius: BorderRadius.circular(4),
@@ -112,20 +128,15 @@ class _ProjectSkeletonState extends State<ProjectSkeleton>
                     ),
                     const SizedBox(height: 16),
                     
-                    // Tags placeholders
-                    Row(
-                      children: List.generate(
-                        3,
-                        (index) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Container(
-                            width: 60,
-                            height: 25,
-                            decoration: BoxDecoration(
-                              color: _colorAnimation.value,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                    // Button placeholder (full width)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 0),
+                      child: Container(
+                        width: double.infinity,
+                        height: 35,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4A00E0),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
