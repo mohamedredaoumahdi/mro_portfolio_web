@@ -391,20 +391,25 @@ class FirestoreService {
 
   // Update social links
   Future<void> updateSocialLinks(Map<String, dynamic> socialData) async {
-    try {
-      print('Updating social links in Firestore...');
-      // Add update timestamp
-      socialData['updatedAt'] = FieldValue.serverTimestamp();
+  try {
+    print('Updating social links in Firestore...');
+    
+    // Create a new map with the provided data
+    Map<String, dynamic> dataToUpdate = Map.from(socialData);
+    
+    // Add Firestore server timestamp
+    dataToUpdate['updatedAt'] = FieldValue.serverTimestamp();
 
-      await _configCollection
-          .doc('social_links')
-          .set(socialData, SetOptions(merge: true));
-      print('Social links updated successfully');
-    } catch (e) {
-      print('Error updating social links: $e');
-      rethrow;
-    }
+    await _configCollection
+        .doc('social_links')
+        .set(dataToUpdate, SetOptions(merge: true));
+        
+    print('Social links updated successfully');
+  } catch (e) {
+    print('Error updating social links: $e');
+    throw e;  // Re-throw so UI can handle it
   }
+}
 
   // =================== Contact Form Submissions ===================
 

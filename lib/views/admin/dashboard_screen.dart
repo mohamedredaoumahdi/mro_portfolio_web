@@ -19,6 +19,7 @@ import 'package:portfolio_website/views/admin/services/services_manager.dart';
 import 'package:portfolio_website/views/admin/profile/profile_editor.dart';
 import 'package:portfolio_website/views/admin/analytics/analytics_dashboard.dart';
 import 'package:portfolio_website/views/admin/settings/settings_page.dart';
+import 'package:portfolio_website/views/admin/messages/messages_manager.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -49,6 +50,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     {'icon': Icons.design_services, 'label': 'Services'},
     {'icon': Icons.person, 'label': 'Profile'},
     {'icon': Icons.insert_link, 'label': 'Social Links'},
+    {'icon': Icons.email, 'label': 'Messages'},
     {'icon': Icons.analytics, 'label': 'Analytics'},
     {'icon': Icons.settings, 'label': 'Settings'},
   ];
@@ -68,7 +70,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       const ServicesManagerScreen(),
       const ProfileEditorScreen(),
       const SocialLinksManagerScreen(),
-      const AnalyticsDashboardScreen(),
+      const MessagesManagerScreen(), 
+      const EnhancedAnalyticsDashboardScreen(),
       const SettingsPage(),
     ];
   }

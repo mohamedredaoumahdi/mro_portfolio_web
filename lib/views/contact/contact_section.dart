@@ -1,8 +1,10 @@
 // lib/views/contact/contact_section.dart
+// Update the imports section to include SocialLinksViewModel
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:portfolio_website/config/app_config.dart';
 import 'package:portfolio_website/viewmodels/profile_viewmodel.dart';
+import 'package:portfolio_website/viewmodels/social_links_viewmodel.dart'; // Add this import
 import 'package:provider/provider.dart';
 
 import '../../widgets/responsive_wrapper.dart';
@@ -15,8 +17,11 @@ class ContactSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ContactViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ContactViewModel()),
+        ChangeNotifierProvider(create: (_) => SocialLinksViewModel()..initialize()), // Add this provider
+      ],
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 80),
         decoration: BoxDecoration(
@@ -206,83 +211,88 @@ class ContactSection extends StatelessWidget {
     );
   }
   
-  Widget _buildSocialLinks(BuildContext context) {
-    const socialLinks = AppConfig.socialLinks;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Follow Me',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 24),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            SocialButton(
-              icon: FontAwesomeIcons.facebook,
-              url: socialLinks.facebook,
-              label: 'Facebook',
-            ),
-            SocialButton(
-              icon: FontAwesomeIcons.instagram,
-              url: socialLinks.instagram,
-              label: 'Instagram',
-            ),
-            SocialButton(
-              icon: FontAwesomeIcons.github,
-              url: socialLinks.github,
-              label: 'GitHub',
-            ),
-            SocialButton(
-              icon: FontAwesomeIcons.linkedin,
-              url: socialLinks.linkedin,
-              label: 'LinkedIn',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildHireMeLinks(BuildContext context) {
-    const socialLinks = AppConfig.socialLinks;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Hire Me On',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 24),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            SocialButton(
-              icon: FontAwesomeIcons.icons,
-              url: socialLinks.fiverr,
-              label: 'Fiverr',
-              color: const Color(0xFF1DBF73),
-            ),
-            SocialButton(
-              icon: FontAwesomeIcons.upwork,
-              url: socialLinks.upwork,
-              label: 'Upwork',
-              color: const Color(0xFF6FDA44),
-            ),
-            SocialButton(
-              icon: FontAwesomeIcons.adversal,
-              url: socialLinks.freelancer,
-              label: 'Freelancer',
-              color: const Color(0xFF29B2FE),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  // Update the _buildSocialLinks method in lib/views/contact/contact_section.dart
+
+Widget _buildSocialLinks(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Follow Me',
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      const SizedBox(height: 24),
+      Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: [
+          SocialButton(
+            icon: FontAwesomeIcons.facebook,
+            url: AppConfig.socialLinks.facebook, // Fallback URL
+            label: 'Facebook',
+            linkId: 'facebook', // Added linkId parameter
+          ),
+          SocialButton(
+            icon: FontAwesomeIcons.instagram,
+            url: AppConfig.socialLinks.instagram, // Fallback URL
+            label: 'Instagram',
+            linkId: 'instagram', // Added linkId parameter
+          ),
+          SocialButton(
+            icon: FontAwesomeIcons.github,
+            url: AppConfig.socialLinks.github, // Fallback URL
+            label: 'GitHub',
+            linkId: 'github', // Added linkId parameter
+          ),
+          SocialButton(
+            icon: FontAwesomeIcons.linkedin,
+            url: AppConfig.socialLinks.linkedin, // Fallback URL
+            label: 'LinkedIn',
+            linkId: 'linkedin', // Added linkId parameter
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _buildHireMeLinks(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Hire Me On',
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      const SizedBox(height: 24),
+      Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: [
+          SocialButton(
+            icon: FontAwesomeIcons.icons,
+            url: AppConfig.socialLinks.fiverr, // Fallback URL
+            label: 'Fiverr',
+            color: const Color(0xFF1DBF73),
+            linkId: 'fiverr', // Added linkId parameter
+          ),
+          SocialButton(
+            icon: FontAwesomeIcons.upwork,
+            url: AppConfig.socialLinks.upwork, // Fallback URL
+            label: 'Upwork',
+            color: const Color(0xFF6FDA44),
+            linkId: 'upwork', // Added linkId parameter
+          ),
+          SocialButton(
+            icon: FontAwesomeIcons.adversal,
+            url: AppConfig.socialLinks.freelancer, // Fallback URL
+            label: 'Freelancer',
+            color: const Color(0xFF29B2FE),
+            linkId: 'freelancer', // Added linkId parameter
+          ),
+        ],
+      ),
+    ],
+  );
+}
 }

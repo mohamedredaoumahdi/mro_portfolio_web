@@ -1,11 +1,14 @@
+// lib/views/contact/widgets/social_button.dart
 import 'package:flutter/material.dart';
-import '../../../main.dart';
+import 'package:portfolio_website/main.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SocialButton extends StatefulWidget {
   final IconData icon;
   final String url;
   final String label;
   final Color? color;
+  final String linkId; // Add this parameter to identify which social link
 
   const SocialButton({
     super.key,
@@ -13,6 +16,7 @@ class SocialButton extends StatefulWidget {
     required this.url,
     required this.label,
     this.color,
+    required this.linkId, // Make this required
   });
 
   @override
@@ -21,6 +25,48 @@ class SocialButton extends StatefulWidget {
 
 class _SocialButtonState extends State<SocialButton> {
   bool _isHovered = false;
+  String _actualUrl = ''; // Store the actual URL from Firebase
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLatestUrl();
+  }
+
+  Future<void> _fetchLatestUrl() async {
+    try {
+      // Directly fetch the latest link from Firebase
+      final doc = await FirebaseFirestore.instance
+          .collection('config')
+          .doc('social_links')
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        if (data.containsKey(widget.linkId)) {
+          setState(() {
+            _actualUrl = data[widget.linkId] as String;
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+      
+      // Fallback to the provided URL if Firebase data isn't available
+      setState(() {
+        _actualUrl = widget.url;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching social link: $e');
+      // Fallback to the provided URL on error
+      setState(() {
+        _actualUrl = widget.url;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +74,7 @@ class _SocialButtonState extends State<SocialButton> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: InkWell(
-        onTap: () => launchURL(widget.url),
+        onTap: _isLoading ? null : () => launchURL(_actualUrl),
         borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
