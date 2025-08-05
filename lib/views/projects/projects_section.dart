@@ -7,7 +7,6 @@ import '../../viewmodels/project_viewmodel.dart';
 import '../../widgets/responsive_wrapper.dart';
 import '../../widgets/skeleton_loaders/project_skeleton.dart';
 import 'widgets/project_card.dart';
-import 'widgets/project_detail_dialog.dart';
 
 class ProjectsSection extends StatelessWidget {
   const ProjectsSection({super.key});
@@ -45,7 +44,18 @@ class ProjectsSection extends StatelessWidget {
             const SizedBox(height: 60),
             Consumer<ProjectViewModel>(
               builder: (context, viewModel, child) {
-                if (viewModel.isLoading) {
+                // Initialize the viewModel if not already done
+                if (!viewModel.initialized && !viewModel.isLoading) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    viewModel.initialize();
+                  });
+                }
+                
+                // Show projects if we have any projects at all (regardless of loading state)
+                // This ensures projects show immediately when available from AppConfig
+                final shouldShowProjects = viewModel.projects.isNotEmpty;
+                
+                if (!shouldShowProjects) {
                   return _buildSkeletonGrid(context);
                 }
                 
@@ -172,15 +182,16 @@ class ProjectsSection extends StatelessWidget {
   Widget _buildProjectsGrid(BuildContext context, ProjectViewModel viewModel) {
     return AnimationLimiter(
       child: ResponsiveWrapper(
-        mobile: _buildProjectsList(context, viewModel),
-        tablet: _buildProjectsGrid2Columns(context, viewModel),
-        desktop: _buildProjectsGrid3Columns(context, viewModel),
+        mobile: _buildProjectsList(context, viewModel, key: const Key('mobile-projects')),
+        tablet: _buildProjectsGrid2Columns(context, viewModel, key: const Key('tablet-projects')),
+        desktop: _buildProjectsGrid3Columns(context, viewModel, key: const Key('desktop-projects')),
       ),
     );
   }
   
-  Widget _buildProjectsList(BuildContext context, ProjectViewModel viewModel) {
+  Widget _buildProjectsList(BuildContext context, ProjectViewModel viewModel, {Key? key}) {
     return ListView.builder(
+      key: key,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: viewModel.projects.length,
@@ -206,70 +217,100 @@ class ProjectsSection extends StatelessWidget {
     );
   }
   
-  Widget _buildProjectsGrid2Columns(BuildContext context, ProjectViewModel viewModel) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 24,
-        mainAxisSpacing: 24,
-        childAspectRatio: 0.7, // Adjusted for new card layout
-      ),
-      itemCount: viewModel.projects.length,
-      itemBuilder: (context, index) {
-        return AnimationConfiguration.staggeredGrid(
-          position: index,
-          duration: const Duration(milliseconds: 600),
-          columnCount: 2,
-          child: ScaleAnimation(
-            child: FadeInAnimation(
-              child: ProjectCard(
-                project: viewModel.projects[index],
-                // Only the Details button will trigger this
-                onTap: () => _showProjectDetails(context, viewModel.projects[index]),
-              ),
-            ),
+  Widget _buildProjectsGrid2Columns(BuildContext context, ProjectViewModel viewModel, {Key? key}) {
+    return LayoutBuilder(
+      key: key,
+      builder: (context, constraints) {
+        // Calculate responsive aspect ratio and spacing
+        final screenWidth = constraints.maxWidth;
+        
+        // At narrow tablet widths, use single column for better card display
+        if (screenWidth < 650) {
+          return _buildProjectsList(context, viewModel, key: const Key('narrow-tablet-projects'));
+        }
+        
+        // Calculate spacing and aspect ratio based on available width
+        final crossAxisSpacing = screenWidth < 800 ? 16.0 : 24.0;
+        final mainAxisSpacing = screenWidth < 800 ? 16.0 : 24.0;
+        final aspectRatio = screenWidth < 800 ? 0.8 : 0.7; // Slightly taller for narrower screens
+        
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: crossAxisSpacing,
+            mainAxisSpacing: mainAxisSpacing,
+            childAspectRatio: aspectRatio,
           ),
+          itemCount: viewModel.projects.length,
+          itemBuilder: (context, index) {
+            return AnimationConfiguration.staggeredGrid(
+              position: index,
+              duration: const Duration(milliseconds: 600),
+              columnCount: 2,
+              child: ScaleAnimation(
+                child: FadeInAnimation(
+                  child: ProjectCard(
+                    project: viewModel.projects[index],
+                    onTap: () => _showProjectDetails(context, viewModel.projects[index]),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
   
-  Widget _buildProjectsGrid3Columns(BuildContext context, ProjectViewModel viewModel) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 24,
-        mainAxisSpacing: 24,
-        childAspectRatio: 0.7, // Adjusted for new card layout
-      ),
-      itemCount: viewModel.projects.length,
-      itemBuilder: (context, index) {
-        return AnimationConfiguration.staggeredGrid(
-          position: index,
-          duration: const Duration(milliseconds: 600),
-          columnCount: 3,
-          child: ScaleAnimation(
-            child: FadeInAnimation(
-              child: ProjectCard(
-                project: viewModel.projects[index],
-                // Only the Details button will trigger this
-                onTap: () => _showProjectDetails(context, viewModel.projects[index]),
-              ),
-            ),
+  Widget _buildProjectsGrid3Columns(BuildContext context, ProjectViewModel viewModel, {Key? key}) {
+    return LayoutBuilder(
+      key: key,
+      builder: (context, constraints) {
+        // Calculate responsive grid parameters
+        final screenWidth = constraints.maxWidth;
+        
+        // Fallback to fewer columns on smaller screens
+        if (screenWidth < 1200) {
+          return _buildProjectsGrid2Columns(context, viewModel, key: const Key('narrow-desktop-projects'));
+        }
+        
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 24,
+            mainAxisSpacing: 24,
+            childAspectRatio: 0.7,
           ),
+          itemCount: viewModel.projects.length,
+          itemBuilder: (context, index) {
+            return AnimationConfiguration.staggeredGrid(
+              position: index,
+              duration: const Duration(milliseconds: 600),
+              columnCount: 3,
+              child: ScaleAnimation(
+                child: FadeInAnimation(
+                  child: ProjectCard(
+                    project: viewModel.projects[index],
+                    onTap: () => _showProjectDetails(context, viewModel.projects[index]),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
   
   void _showProjectDetails(BuildContext context, dynamic project) {
-    showDialog(
-      context: context,
-      builder: (context) => ProjectDetailDialog(project: project),
+    Navigator.pushNamed(
+      context,
+      '/project-details',
+      arguments: {'project': project},
     );
   }
 }

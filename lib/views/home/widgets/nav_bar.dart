@@ -23,7 +23,6 @@ class _DesktopNavBar extends StatelessWidget {
   final Function(int) onNavItemTapped;
 
   const _DesktopNavBar({
-    super.key,
     required this.onNavItemTapped,
   });
 
@@ -34,14 +33,9 @@ class _DesktopNavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _LogoSection(),
+          _LogoSection(onTap: () => onNavItemTapped(0)),
           Row(
             children: [
-              _NavItem(
-                title: 'Home',
-                index: 0,
-                onTap: onNavItemTapped,
-              ),
               _NavItem(
                 title: 'Services',
                 index: 1,
@@ -72,7 +66,6 @@ class _MobileNavBar extends StatelessWidget {
   final Function(int) onNavItemTapped;
 
   const _MobileNavBar({
-    super.key,
     required this.onNavItemTapped,
   });
 
@@ -83,7 +76,7 @@ class _MobileNavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _LogoSection(),
+          _LogoSection(onTap: () => onNavItemTapped(0)),
           Row(
             children: [
               // Add theme toggle button
@@ -124,12 +117,6 @@ class _MobileNavBar extends StatelessWidget {
             ),
             const Divider(),
             _MobileNavItem(
-              title: 'Home',
-              index: 0,
-              onTap: onNavItemTapped,
-              icon: Icons.home,
-            ),
-            _MobileNavItem(
               title: 'Services',
               index: 1,
               onTap: onNavItemTapped,
@@ -155,33 +142,44 @@ class _MobileNavBar extends StatelessWidget {
 }
 
 class _LogoSection extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _LogoSection({this.onTap});
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 30,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Center(
-            child: Text(
-              '</>', 
-              style: TextStyle(
-                color: Colors.white, 
-                fontWeight: FontWeight.bold
-              )
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Center(
+                child: Text(
+                  '</>', 
+                  style: TextStyle(
+                    color: Colors.white, 
+                    fontWeight: FontWeight.bold
+                  )
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 10),
+            Text(
+              'MRO',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Text(
-          'MRO',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-      ],
+      ),
     );
   }
 }
@@ -192,7 +190,6 @@ class _NavItem extends StatelessWidget {
   final Function(int) onTap;
 
   const _NavItem({
-    super.key,
     required this.title,
     required this.index,
     required this.onTap,
@@ -224,7 +221,6 @@ class _MobileNavItem extends StatelessWidget {
   final IconData icon;
 
   const _MobileNavItem({
-    super.key,
     required this.title,
     required this.index,
     required this.onTap,

@@ -13,6 +13,7 @@ class ProjectViewModel extends ChangeNotifier {
   String? _errorMessage;
   StreamSubscription<QuerySnapshot>? _subscription;
   bool _initialized = false;
+  Timer? _timeoutTimer;
 
   // Getters
   List<Project> get projects => _projects;
@@ -27,8 +28,16 @@ class ProjectViewModel extends ChangeNotifier {
   // Initialize method to be called after widget build
   Future<void> initialize() async {
     if (!_initialized && !_isLoading) {
-      await loadProjects();
+      // Always load AppConfig data first as immediate fallback
+      _loadFromAppConfig();
+      // Notify listeners immediately so UI can show projects
+      notifyListeners();
+      
+      // Mark as initialized since we have AppConfig data
       _initialized = true;
+      
+      // Then try to load from Firebase (this might update the data later)
+      await loadProjects();
     }
   }
 
@@ -56,21 +65,33 @@ class ProjectViewModel extends ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
-      // Use Firebase if available
+      // Use Firebase if available (but we already have AppConfig data as fallback)
       if (_isFirebaseAvailable) {
         try {
           // Set up real-time listener for projects
           _setupRealTimeListener();
+          
+          // Add timeout to prevent getting stuck in loading state
+          _timeoutTimer?.cancel();
+          _timeoutTimer = Timer(const Duration(seconds: 5), () {
+            if (_isLoading) {
+              print('Firebase listener timeout - falling back to AppConfig data');
+              _loadFromAppConfig(); // This will set _isLoading = false
+              notifyListeners();
+            }
+          });
+          
           return; // Early return as listener will handle updates
         } catch (e) {
           print(
-              'Error setting up Firestore listener: $e - Falling back to local config');
-          // Firebase error - fall back to local config
-          _loadFromAppConfig();
+              'Error setting up Firestore listener: $e - Using AppConfig fallback');
+          // Firebase error - we already have AppConfig data, just set loading to false
+          _isLoading = false;
+          notifyListeners();
+          return;
         }
       } else {
-        // Firebase not available - use local config
-        _loadFromAppConfig();
+        // Firebase not available - we already have AppConfig data
         print('Firebase not available, using AppConfig fallback');
       }
 
@@ -128,23 +149,22 @@ class ProjectViewModel extends ChangeNotifier {
         }).toList();
 
         _projects = updatedProjects;
+        _timeoutTimer?.cancel(); // Cancel timeout since we got data
         _isLoading = false;
         _errorMessage = null;
         notifyListeners();
       }, onError: (e) {
-        print('Error in real-time listener: $e');
-        _errorMessage = 'Error loading projects: $e';
-        _loadFromAppConfig();
-        _isLoading = false;
-        notifyListeners();
+        print('Error in real-time listener: $e - falling back to AppConfig');
+        _timeoutTimer?.cancel(); // Cancel timeout since we're handling the error
+        _loadFromAppConfig(); // This will set _isLoading = false
+        notifyListeners(); // Ensure UI updates
       }, onDone: () {
         print('Projects listener closed');
       });
     } catch (e) {
       print('Exception setting up projects listener: $e');
       _errorMessage = 'Error setting up projects listener: $e';
-      _loadFromAppConfig();
-      _isLoading = false;
+      _loadFromAppConfig(); // This will set _isLoading = false  
       notifyListeners();
     }
   }
@@ -166,6 +186,11 @@ class ProjectViewModel extends ChangeNotifier {
         return project;
       },
     );
+
+    // Set loading to false since we have AppConfig data
+    _isLoading = false;
+    _errorMessage = null;
+    print('AppConfig projects loaded: ${_projects.length} projects');
 
     // If coming from AppConfig, you could also try to load screenshots from Firestore separately
     // even if the rest of the project info is from AppConfig
@@ -258,14 +283,17 @@ class ProjectViewModel extends ChangeNotifier {
   Future<void> refreshProjects() async {
     _subscription?.cancel();
     _subscription = null;
+    _timeoutTimer?.cancel();
+    _timeoutTimer = null;
     _isLoading = false;
     await loadProjects();
   }
 
   @override
   void dispose() {
-    // Cancel subscription when viewmodel is disposed
+    // Cancel subscription and timeout when viewmodel is disposed
     _subscription?.cancel();
+    _timeoutTimer?.cancel();
     super.dispose();
   }
 }

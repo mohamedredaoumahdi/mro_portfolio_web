@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/contact_viewmodel.dart';
 
+// Consistent purple colors
+class FormColors {
+  static const Color primaryPurple = Color(0xFF4A00E0);
+  static const Color accentPurple = Color(0xFF8E2DE2);
+}
+
 class ContactForm extends StatefulWidget {
   const ContactForm({super.key});
 
@@ -109,11 +115,26 @@ class _ContactFormState extends State<ContactForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Send a Message',
-                style: Theme.of(context).textTheme.titleLarge,
+              Container(
+                padding: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: FormColors.accentPurple.withValues(alpha: 0.3),
+                      width: 3,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  'Send a Message',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    letterSpacing: -0.5,
+                  ),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               
               // Error message if submission failed
               if (viewModel.submissionError != null)
@@ -139,113 +160,443 @@ class _ContactFormState extends State<ContactForm> {
                   ),
                 ),
                 
-              // Name field
+              // Enhanced Name field
               Focus(
                 onFocusChange: (hasFocus) => _onFieldFocusChange(hasFocus, 'name'),
-                child: TextFormField(
-                  controller: _nameController,
-                  focusNode: _nameFocus,
-                  decoration: InputDecoration(
-                    labelText: 'Name *',
-                    hintText: 'Enter your name',
-                    prefixIcon: const Icon(Icons.person),
-                    errorStyle: const TextStyle(height: 0.7),
-                    errorMaxLines: 2,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) {
-                    FocusScope.of(context).requestFocus(_emailFocus);
-                  },
-                  validator: _validateName,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Email field
-              Focus(
-                onFocusChange: (hasFocus) => _onFieldFocusChange(hasFocus, 'email'),
-                child: TextFormField(
-                  controller: _emailController,
-                  focusNode: _emailFocus,
-                  decoration: InputDecoration(
-                    labelText: 'Email *',
-                    hintText: 'Enter your email address',
-                    prefixIcon: const Icon(Icons.email),
-                    errorStyle: const TextStyle(height: 0.7),
-                    errorMaxLines: 2,
+                  child: TextFormField(
+                    controller: _nameController,
+                    focusNode: _nameFocus,
+                    decoration: InputDecoration(
+                      labelText: 'Full Name *',
+                      hintText: 'Enter your full name',
+                      prefixIcon: Container(
+                        margin: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.person_outline,
+                          color: FormColors.primaryPurple,
+                          size: 20,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).cardColor.withValues(alpha: 0.8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.accentPurple.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.accentPurple.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.primaryPurple,
+                          width: 2.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.5,
+                        ),
+                      ),
+                      labelStyle: TextStyle(
+                        color: FormColors.primaryPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).hintColor.withValues(alpha: 0.6),
+                      ),
+                      errorStyle: const TextStyle(
+                        height: 0.8,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      errorMaxLines: 2,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    ),
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_emailFocus);
+                    },
+                    validator: _validateName,
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) {
-                    FocusScope.of(context).requestFocus(_subjectFocus);
-                  },
-                  validator: _validateEmail,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Subject field
-              TextFormField(
-                controller: _subjectController,
-                focusNode: _subjectFocus,
-                decoration: const InputDecoration(
-                  labelText: 'Subject',
-                  hintText: 'What is this about?',
-                  prefixIcon: Icon(Icons.subject),
-                ),
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_) {
-                  FocusScope.of(context).requestFocus(_messageFocus);
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Message field
-              Focus(
-                onFocusChange: (hasFocus) => _onFieldFocusChange(hasFocus, 'message'),
-                child: TextFormField(
-                  controller: _messageController,
-                  focusNode: _messageFocus,
-                  decoration: InputDecoration(
-                    labelText: 'Message *',
-                    hintText: 'Enter your message',
-                    alignLabelWithHint: true,
-                    prefixIcon: const Icon(Icons.message),
-                    errorStyle: const TextStyle(height: 0.7),
-                    errorMaxLines: 2,
-                  ),
-                  maxLines: 5,
-                  textInputAction: TextInputAction.done,
-                  validator: _validateMessage,
                 ),
               ),
               const SizedBox(height: 24),
               
-              // Submit button
+              // Enhanced Email field
+              Focus(
+                onFocusChange: (hasFocus) => _onFieldFocusChange(hasFocus, 'email'),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextFormField(
+                    controller: _emailController,
+                    focusNode: _emailFocus,
+                    decoration: InputDecoration(
+                      labelText: 'Email Address *',
+                      hintText: 'Enter your email address',
+                      prefixIcon: Container(
+                        margin: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.email_outlined,
+                          color: FormColors.primaryPurple,
+                          size: 20,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).cardColor.withValues(alpha: 0.8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.accentPurple.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.accentPurple.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.primaryPurple,
+                          width: 2.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.5,
+                        ),
+                      ),
+                      labelStyle: TextStyle(
+                        color: FormColors.primaryPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).hintColor.withValues(alpha: 0.6),
+                      ),
+                      errorStyle: const TextStyle(
+                        height: 0.8,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      errorMaxLines: 2,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_subjectFocus);
+                    },
+                    validator: _validateEmail,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Enhanced Subject field
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextFormField(
+                  controller: _subjectController,
+                  focusNode: _subjectFocus,
+                  decoration: InputDecoration(
+                    labelText: 'Subject',
+                    hintText: 'What is this about?',
+                    prefixIcon: Container(
+                      margin: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.subject_outlined,
+                        color: FormColors.primaryPurple,
+                        size: 20,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).cardColor.withValues(alpha: 0.8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: FormColors.accentPurple.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: FormColors.accentPurple.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: FormColors.primaryPurple,
+                        width: 2.5,
+                      ),
+                    ),
+                    labelStyle: TextStyle(
+                      color: FormColors.primaryPurple,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).hintColor.withValues(alpha: 0.6),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  ),
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) {
+                    FocusScope.of(context).requestFocus(_messageFocus);
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Enhanced Message field
+              Focus(
+                onFocusChange: (hasFocus) => _onFieldFocusChange(hasFocus, 'message'),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextFormField(
+                    controller: _messageController,
+                    focusNode: _messageFocus,
+                    decoration: InputDecoration(
+                      labelText: 'Your Message *',
+                      hintText: 'Tell me about your project or question...',
+                      alignLabelWithHint: true,
+                      prefixIcon: Container(
+                        margin: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: FormColors.primaryPurple.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.message_outlined,
+                          color: FormColors.primaryPurple,
+                          size: 20,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).cardColor.withValues(alpha: 0.8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.accentPurple.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.accentPurple.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: FormColors.primaryPurple,
+                          width: 2.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2.5,
+                        ),
+                      ),
+                      labelStyle: TextStyle(
+                        color: FormColors.primaryPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).hintColor.withValues(alpha: 0.6),
+                      ),
+                      errorStyle: const TextStyle(
+                        height: 0.8,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      errorMaxLines: 2,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    ),
+                    maxLines: 6,
+                    textInputAction: TextInputAction.done,
+                    validator: _validateMessage,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              
+              // Enhanced Submit button
               Center(
-                child: SizedBox(
-                  width: 200,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: viewModel.isSubmitting
-                        ? null
-                        : () => _submitForm(viewModel),
-                    child: viewModel.isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Send Message',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                child: Container(
+                  width: 240,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        FormColors.primaryPurple,
+                        FormColors.accentPurple,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: FormColors.primaryPurple.withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 25,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: viewModel.isSubmitting ? null : () => _submitForm(viewModel),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (viewModel.isSubmitting) ...[
+                              const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'Sending...',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ] else ...[
+                              Icon(
+                                Icons.send_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Send Message',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

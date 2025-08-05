@@ -124,7 +124,7 @@ class AppTheme {
         elevation: 0,
       ),
       scaffoldBackgroundColor: backgroundColor,
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: isDarkMode 
             ? Color(config.backgroundColor).withOpacity(0.7) 
             : Colors.white,

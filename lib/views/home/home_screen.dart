@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:portfolio_website/config/app_config.dart';
+
 import 'package:portfolio_website/viewmodels/profile_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
@@ -37,7 +37,22 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize data after widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeData();
+      _handleRouteArguments();
     });
+  }
+
+  void _handleRouteArguments() {
+    // Check if we need to scroll to a specific section
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic> && args.containsKey('scrollToSection')) {
+      final sectionIndex = args['scrollToSection'] as int;
+      // Delay scrolling to ensure the page is fully loaded
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          _scrollToSection(sectionIndex);
+        }
+      });
+    }
   }
 
   Future<void> _initializeData() async {

@@ -15,7 +15,7 @@ dependencies:
   animated_text_kit: ^4.2.2
   url_launcher: ^6.2.2
   font_awesome_flutter: ^10.6.0
-  youtube_player_iframe: ^4.0.4
+  youtube_player_iframe: ^5.2.1
   flutter_staggered_animations: ^1.1.1
   universal_html: ^2.2.4
   shared_preferences: ^2.2.2
@@ -67,8 +67,8 @@ flutter:
   
   assets:
     - assets/icons/
-    - assets/images/
-    - assets/images/projects/
+    #- assets/images/
+    #- assets/images/projects/
 
   fonts:
     - family: JetBrainsMono

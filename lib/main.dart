@@ -17,6 +17,8 @@ import 'viewmodels/profile_viewmodel.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_setup_service.dart';
 import 'views/home/home_screen.dart';
+import 'views/projects/project_details_page.dart';
+import 'models/project_model.dart';
 import 'routes/admin_routes.dart';
 
 // Flag to track whether we're using Firebase
@@ -147,6 +149,29 @@ class MyApp extends StatelessWidget {
             initialRoute: '/',
             routes: {
               '/': (context) => const HomeScreen(),
+              '/project-details': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                if (args == null || args is! Map<String, dynamic>) {
+                  // If no arguments provided, redirect to home
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.pushReplacementNamed(context, '/');
+                  });
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                final project = args['project'] as Project?;
+                if (project == null) {
+                  // If no project provided, redirect to home
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.pushReplacementNamed(context, '/');
+                  });
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                return ProjectDetailsPage(project: project);
+              },
               ...AdminRoutes.getRoutes(),
             },
           );
