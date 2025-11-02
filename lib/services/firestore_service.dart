@@ -407,7 +407,7 @@ class FirestoreService {
     print('Social links updated successfully');
   } catch (e) {
     print('Error updating social links: $e');
-    throw e;  // Re-throw so UI can handle it
+    rethrow;  // Re-throw so UI can handle it
   }
 }
 

@@ -27,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<GlobalKey> _sectionKeys = List.generate(4, (_) => GlobalKey());
   bool _isInitialized = false;
-  bool _isLoading = true;
   String? _errorMessage;
 
   @override
@@ -58,8 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initializeData() async {
     if (!mounted || _isInitialized) return;
     
-    setState(() => _isLoading = true);
-    
     try {
       // Initialize all ViewModels
       final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
@@ -75,12 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
       
       setState(() {
         _isInitialized = true;
-        _isLoading = false;
         _errorMessage = null;
       });
     } catch (e) {
       setState(() {
-        _isLoading = false;
         _errorMessage = 'Failed to load data: $e';
       });
       print('HomeScreen initialization error: $e');
@@ -104,41 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _refreshData() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      final profileViewModel = Provider.of<ProfileViewModel>(context, listen: false);
-      final projectViewModel = Provider.of<ProjectViewModel>(context, listen: false);
-      final serviceViewModel = Provider.of<ServiceViewModel>(context, listen: false);
-      
-      // Refresh all data
-      await Future.wait([
-        profileViewModel.refreshData(),
-        projectViewModel.refreshProjects(),
-        serviceViewModel.loadServices(),
-      ]);
-      
-      setState(() {
-        _isLoading = false;
-        _errorMessage = null;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data refreshed successfully'))
-      );
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to refresh data: $e';
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to refresh data: $e'))
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Get current theme mode
@@ -146,13 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDarkMode = themeViewModel.isDarkMode;
     
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: _refreshData,
-        tooltip: 'Refresh data',
-        child: _isLoading 
-            ? const CircularProgressIndicator(color: Colors.white)
-            : const Icon(Icons.refresh),
-      ),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [

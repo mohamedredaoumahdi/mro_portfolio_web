@@ -257,7 +257,7 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
                           width: double.infinity,
                           height: buttonHeight.clamp(30.0, 50.0), // Ensure reasonable bounds
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
+                            gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
@@ -377,7 +377,7 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
                             width: double.infinity,
                             height: buttonHeight.clamp(30.0, 50.0), // Ensure reasonable bounds
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
+                              gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [

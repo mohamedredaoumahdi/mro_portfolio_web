@@ -18,75 +18,129 @@ class _ServiceCardState extends State<ServiceCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardBackgroundColor = isDarkMode 
+        ? Theme.of(context).colorScheme.surface
+        : Colors.white;
+    final borderColor = isDarkMode
+        ? Colors.grey.withOpacity(0.3)
+        : Colors.grey.withOpacity(0.2);
+    
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _isHovered
-              ? Theme.of(context).colorScheme.surface.withOpacity(0.8)
-              : Theme.of(context).colorScheme.surface.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _isHovered
-                ? Theme.of(context).colorScheme.primary
-                : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: _isHovered
-              ? [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  )
-                ]
-              : [],
-        ),
+      child: Transform.scale(
+        scale: _isHovered ? 1.02 : 1.0,
+        child: SizedBox(
+          height: 320,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: cardBackgroundColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _isHovered 
+                    ? borderColor // Grey on hover
+                    : Theme.of(context).colorScheme.primary, // Purple when not hovering
+                width: _isHovered ? 1.5 : 1,
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(isDarkMode ? 0.2 : 0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.12),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 0,
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                        spreadRadius: 0,
+                      ),
+                    ],
+            ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      _getIconForService(widget.service.title),
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 28,
-                    ),
+            // Circular icon container with hover animation
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              width: _isHovered ? 115 : 110,
+              height: _isHovered ? 115 : 110,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(_isHovered ? 0.15 : 0.1),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(_isHovered ? 0.4 : 0.3),
+                  width: _isHovered ? 1.5 : 1,
+                ),
+                boxShadow: _isHovered
+                    ? [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Center(
+                child: AnimatedScale(
+                  scale: _isHovered ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: Icon(
+                    _getIconForService(widget.service.title),
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 50,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.service.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: _isHovered
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-              ],
+              ),
+            ),
+            const SizedBox(height: 35),
+            // Title - bold, centered
+            Text(
+              widget.service.title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: isDarkMode 
+                    ? Colors.white 
+                    : Colors.grey[900],
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
             const SizedBox(height: 12),
+            // Description - left-aligned, smaller grey text, max 3 lines
             Text(
               widget.service.description,
+              textAlign: TextAlign.left,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: isDarkMode
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
+                fontSize: 14,
+                height: 1.5,
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -102,6 +156,14 @@ class _ServiceCardState extends State<ServiceCard> {
       return Icons.api;
     } else if (title.contains('Maintenance')) {
       return Icons.build;
+    } else if (title.contains('Flutter')) {
+      return Icons.flutter_dash;
+    } else if (title.contains('Firebase')) {
+      return Icons.local_fire_department;
+    } else if (title.contains('iOS') || title.contains('Swift')) {
+      return Icons.phone_iphone;
+    } else if (title.contains('Android')) {
+      return Icons.android;
     } else {
       return Icons.code;
     }

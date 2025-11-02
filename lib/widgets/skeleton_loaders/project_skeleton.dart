@@ -1,6 +1,5 @@
 // lib/widgets/skeleton_loaders/project_skeleton.dart
 import 'package:flutter/material.dart';
-import 'dart:ui_web';
 
 
 class ProjectSkeleton extends StatefulWidget {

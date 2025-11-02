@@ -86,9 +86,7 @@ class ThemeViewModel extends ChangeNotifier {
   // Save current theme preference
   Future<void> _saveThemePreference() async {
     try {
-      if (_prefs == null) {
-        _prefs = await SharedPreferences.getInstance();
-      }
+      _prefs ??= await SharedPreferences.getInstance();
       
       await _prefs!.setBool(_darkModeKey, _isDarkMode);
     } catch (e) {

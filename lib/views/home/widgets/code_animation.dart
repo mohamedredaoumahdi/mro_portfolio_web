@@ -12,7 +12,7 @@ class CodeAnimation extends StatefulWidget {
 
 class _CodeAnimationState extends State<CodeAnimation> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  bool _isActive = true;
+  final bool _isActive = true;
   Timer? _timer;
   late final AnimationController _fadeController;
   
@@ -239,16 +239,16 @@ Widget build(BuildContext context) {
   // Build syntax highlighted line
   Widget _buildSyntaxLine(String line, {required bool isDarkMode}) {
     // Keyword colors based on theme
-    final Color keywordColor = const Color(0xFF569CD6); // Blue
-    final Color typeColor = const Color(0xFF4EC9B0);    // Teal
-    final Color stringColor = const Color(0xFFCE9178);  // Orange
+    const Color keywordColor = Color(0xFF569CD6); // Blue
+    const Color typeColor = Color(0xFF4EC9B0);    // Teal
+    const Color stringColor = Color(0xFFCE9178);  // Orange
     final Color normalColor = isDarkMode ? Colors.white70 : Colors.black87;
     
     // Prepare spans for line
     List<InlineSpan> spans = [];
     
     // Find string literals with regex
-    final RegExp stringRegex = RegExp(r'"[^"]*"' + r"|'[^']*'");
+    final RegExp stringRegex = RegExp(r'"[^"]*"' r"|'[^']*'");
     final matches = stringRegex.allMatches(line);
     
     // Process line with strings
@@ -328,9 +328,9 @@ Widget build(BuildContext context) {
     for (final entry in keywords.entries) {
       if (text.contains(entry.key) &&
           (text == entry.key || 
-           text.startsWith(entry.key + ' ') || 
-           text.endsWith(' ' + entry.key) || 
-           text.contains(' ' + entry.key + ' '))) {
+           text.startsWith('${entry.key} ') || 
+           text.endsWith(' ${entry.key}') || 
+           text.contains(' ${entry.key} '))) {
         
         // Simple highlighting for exact keyword match
         return TextSpan(

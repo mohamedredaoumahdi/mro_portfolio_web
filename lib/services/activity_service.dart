@@ -15,7 +15,7 @@ class ActivityService {
   StreamSubscription? _firestoreStreamSubscription;
   
   // Retry configuration
-  int _retryCount = 0;
+  final int _retryCount = 0;
   static const int _maxRetries = 3;
   static const Duration _retryDelay = Duration(seconds: 10);
   

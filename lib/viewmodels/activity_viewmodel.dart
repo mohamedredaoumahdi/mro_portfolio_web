@@ -83,23 +83,23 @@ class ActivityViewModel extends ChangeNotifier {
   }
 
   Future<List<Map<String, dynamic>>> getRecentActivities({int limit = 10}) async {
-  try {
-    final List<Activity> activities = await _activityService.getRecentActivities(limit: limit);
-    
-    // Convert Activity objects to Maps with proper timestamp
-    return activities.map((activity) => {
-      'id': activity.id,
-      'type': activity.type,
-      'message': activity.message,
-      'timestamp': activity.timestamp, // This is a DateTime object from Activity model
-      'entityId': activity.entityId,
-      'metadata': activity.metadata,
-    }).toList();
-  } catch (e) {
-    print('Error fetching recent activities: $e');
-    return [];
+    try {
+      final List<Activity> activities = await _activityService.getRecentActivities(limit: limit);
+      
+      // Convert Activity objects to Maps with proper timestamp
+      return activities.map((activity) => {
+        'id': activity.id,
+        'type': activity.type,
+        'message': activity.message,
+        'timestamp': activity.timestamp, // This is a DateTime object from Activity model
+        'entityId': activity.entityId,
+        'metadata': activity.metadata,
+      }).toList();
+    } catch (e) {
+      print('Error fetching recent activities: $e');
+      return [];
+    }
   }
-}
   
   // Clean up on dispose
   @override

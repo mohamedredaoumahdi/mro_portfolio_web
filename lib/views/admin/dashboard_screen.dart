@@ -1,7 +1,6 @@
 // lib/views/admin/dashboard_screen.dart
 import 'dart:math';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:portfolio_website/models/activity_model.dart';
 import 'package:portfolio_website/models/project_model.dart';

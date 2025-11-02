@@ -1039,9 +1039,9 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
           child: Row(
             children: [
               // Day labels (Monday-Sunday)
-              Column(
+              const Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text('Mon', style: TextStyle(fontSize: 10)),
                   Text('Wed', style: TextStyle(fontSize: 10)),
                   Text('Fri', style: TextStyle(fontSize: 10)),

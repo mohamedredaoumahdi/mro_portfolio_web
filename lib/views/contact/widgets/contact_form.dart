@@ -1,6 +1,7 @@
 // lib/views/contact/widgets/contact_form.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:email_validator/email_validator.dart';
 import '../../../viewmodels/contact_viewmodel.dart';
 
 // Consistent purple colors
@@ -64,13 +65,35 @@ class _ContactFormState extends State<ContactForm> {
   String? _validateEmail(String? value) {
     if (!_emailFieldTouched) return null;
     
-    if (value == null || value.isEmpty) {
-      return 'Please enter your email';
+    if (value == null || value.isEmpty || value.trim().isEmpty) {
+      return 'Please enter your email address';
     }
     
-    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegExp.hasMatch(value)) {
+    // Trim whitespace
+    final trimmedEmail = value.trim();
+    
+    // Check basic format first (contains @ and .)
+    if (!trimmedEmail.contains('@') || !trimmedEmail.contains('.')) {
       return 'Please enter a valid email address';
+    }
+    
+    // Use email_validator package for proper validation
+    if (!EmailValidator.validate(trimmedEmail)) {
+      return 'Please enter a valid email address (e.g., name@example.com)';
+    }
+    
+    // Additional checks for common mistakes
+    if (trimmedEmail.startsWith('@') || trimmedEmail.startsWith('.')) {
+      return 'Email cannot start with @ or .';
+    }
+    
+    if (trimmedEmail.endsWith('@') || trimmedEmail.endsWith('.')) {
+      return 'Email cannot end with @ or .';
+    }
+    
+    // Check for multiple @ symbols
+    if (trimmedEmail.split('@').length > 2) {
+      return 'Email can only contain one @ symbol';
     }
     
     return null;
@@ -187,7 +210,7 @@ class _ContactFormState extends State<ContactForm> {
                           color: FormColors.primaryPurple.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.person_outline,
                           color: FormColors.primaryPurple,
                           size: 20,
@@ -211,7 +234,7 @@ class _ContactFormState extends State<ContactForm> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
+                        borderSide: const BorderSide(
                           color: FormColors.primaryPurple,
                           width: 2.5,
                         ),
@@ -230,7 +253,7 @@ class _ContactFormState extends State<ContactForm> {
                           width: 2.5,
                         ),
                       ),
-                      labelStyle: TextStyle(
+                      labelStyle: const TextStyle(
                         color: FormColors.primaryPurple,
                         fontWeight: FontWeight.w600,
                       ),
@@ -271,6 +294,15 @@ class _ContactFormState extends State<ContactForm> {
                   child: TextFormField(
                     controller: _emailController,
                     focusNode: _emailFocus,
+                    onChanged: (value) {
+                      // Real-time validation feedback
+                      if (_emailFieldTouched && value.isNotEmpty) {
+                        setState(() {
+                          // Trigger validation on change
+                        });
+                        _formKey.currentState?.validate();
+                      }
+                    },
                     decoration: InputDecoration(
                       labelText: 'Email Address *',
                       hintText: 'Enter your email address',
@@ -281,7 +313,7 @@ class _ContactFormState extends State<ContactForm> {
                           color: FormColors.primaryPurple.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.email_outlined,
                           color: FormColors.primaryPurple,
                           size: 20,
@@ -305,7 +337,7 @@ class _ContactFormState extends State<ContactForm> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
+                        borderSide: const BorderSide(
                           color: FormColors.primaryPurple,
                           width: 2.5,
                         ),
@@ -324,7 +356,7 @@ class _ContactFormState extends State<ContactForm> {
                           width: 2.5,
                         ),
                       ),
-                      labelStyle: TextStyle(
+                      labelStyle: const TextStyle(
                         color: FormColors.primaryPurple,
                         fontWeight: FontWeight.w600,
                       ),
@@ -374,7 +406,7 @@ class _ContactFormState extends State<ContactForm> {
                         color: FormColors.primaryPurple.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.subject_outlined,
                         color: FormColors.primaryPurple,
                         size: 20,
@@ -398,12 +430,12 @@ class _ContactFormState extends State<ContactForm> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
+                      borderSide: const BorderSide(
                         color: FormColors.primaryPurple,
                         width: 2.5,
                       ),
                     ),
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                       color: FormColors.primaryPurple,
                       fontWeight: FontWeight.w600,
                     ),
@@ -448,7 +480,7 @@ class _ContactFormState extends State<ContactForm> {
                           color: FormColors.primaryPurple.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.message_outlined,
                           color: FormColors.primaryPurple,
                           size: 20,
@@ -472,7 +504,7 @@ class _ContactFormState extends State<ContactForm> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
+                        borderSide: const BorderSide(
                           color: FormColors.primaryPurple,
                           width: 2.5,
                         ),
@@ -491,7 +523,7 @@ class _ContactFormState extends State<ContactForm> {
                           width: 2.5,
                         ),
                       ),
-                      labelStyle: TextStyle(
+                      labelStyle: const TextStyle(
                         color: FormColors.primaryPurple,
                         fontWeight: FontWeight.w600,
                       ),
@@ -519,7 +551,7 @@ class _ContactFormState extends State<ContactForm> {
                   width: 240,
                   height: 56,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
@@ -561,7 +593,7 @@ class _ContactFormState extends State<ContactForm> {
                                 ),
                               ),
                               const SizedBox(width: 16),
-                              Text(
+                              const Text(
                                 'Sending...',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -571,13 +603,13 @@ class _ContactFormState extends State<ContactForm> {
                                 ),
                               ),
                             ] else ...[
-                              Icon(
+                              const Icon(
                                 Icons.send_rounded,
                                 color: Colors.white,
                                 size: 22,
                               ),
                               const SizedBox(width: 12),
-                              Text(
+                              const Text(
                                 'Send Message',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -587,7 +619,7 @@ class _ContactFormState extends State<ContactForm> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Icon(
+                              const Icon(
                                 Icons.arrow_forward_rounded,
                                 color: Colors.white,
                                 size: 20,
@@ -677,11 +709,17 @@ class _ContactFormState extends State<ContactForm> {
       // Hide keyboard
       FocusScope.of(context).unfocus();
       
+      // Trim and normalize form values before submission
+      final name = _nameController.text.trim();
+      final email = _emailController.text.trim().toLowerCase();
+      final subject = _subjectController.text.trim();
+      final message = _messageController.text.trim();
+      
       viewModel.submitContactForm(
-        name: _nameController.text,
-        email: _emailController.text,
-        subject: _subjectController.text,
-        message: _messageController.text,
+        name: name,
+        email: email,
+        subject: subject,
+        message: message,
       );
     }
   }

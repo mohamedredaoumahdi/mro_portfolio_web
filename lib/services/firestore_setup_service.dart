@@ -89,21 +89,54 @@ class FirestoreSetupService {
       }
     }
     
-    if (snapshot.docs.isEmpty && collectionName == 'services') {
-      // Add sample services from AppConfig
-      print('Initializing services collection with sample data...');
+    if (collectionName == 'services') {
+      // Sync services from AppConfig - add missing ones
+      print('Syncing services collection with AppConfig...');
       
-      int index = 0;
+      // Get existing services
+      final existingServicesSnapshot = await _firestore.collection('services').get();
+      final existingTitles = existingServicesSnapshot.docs
+          .map((doc) => doc.data()['title'] as String? ?? '')
+          .toSet();
+      
+      int maxOrder = -1;
+      for (var doc in existingServicesSnapshot.docs) {
+        final order = doc.data()['order'] as int? ?? 0;
+        if (order > maxOrder) maxOrder = order;
+      }
+      
+      // Add missing services from AppConfig
+      int index = maxOrder + 1;
       for (var serviceInfo in AppConfig.services) {
-        await _firestore.collection('services').add({
-          'title': serviceInfo.title,
-          'description': serviceInfo.description,
-          'iconName': _getIconNameFromService(serviceInfo.title),
-          'order': index,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        index++;
+        if (!existingTitles.contains(serviceInfo.title)) {
+          print('Adding missing service: ${serviceInfo.title}');
+          await _firestore.collection('services').add({
+            'title': serviceInfo.title,
+            'description': serviceInfo.description,
+            'iconName': _getIconNameFromService(serviceInfo.title),
+            'order': index,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          index++;
+        }
+      }
+      
+      // If collection was empty, initialize with all services
+      if (snapshot.docs.isEmpty) {
+        print('Initializing services collection with sample data...');
+        index = 0;
+        for (var serviceInfo in AppConfig.services) {
+          await _firestore.collection('services').add({
+            'title': serviceInfo.title,
+            'description': serviceInfo.description,
+            'iconName': _getIconNameFromService(serviceInfo.title),
+            'order': index,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          index++;
+        }
       }
     }
     
@@ -133,6 +166,10 @@ class FirestoreSetupService {
     if (title.contains('UI') || title.contains('UX')) return 'design_services';
     if (title.contains('API')) return 'api';
     if (title.contains('Maintenance')) return 'build';
+    if (title.contains('Flutter')) return 'flutter_dash';
+    if (title.contains('Firebase')) return 'local_fire_department';
+    if (title.contains('iOS') || title.contains('Swift')) return 'phone_iphone';
+    if (title.contains('Android')) return 'android';
     return 'code'; // Default icon
   }
 }

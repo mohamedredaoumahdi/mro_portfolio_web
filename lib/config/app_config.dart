@@ -40,6 +40,26 @@ native-like experiences.
       description: "Ongoing support, bug fixes, and feature enhancements for existing mobile applications.",
       iconPath: "",
     ),
+    ServiceInfo(
+      title: "Flutter",
+      description: "Expert Flutter development for creating beautiful, fast, and responsive cross-platform mobile applications.",
+      iconPath: "",
+    ),
+    ServiceInfo(
+      title: "Firebase",
+      description: "Integration with Firebase services including authentication, cloud storage, real-time database, and analytics.",
+      iconPath: "",
+    ),
+    ServiceInfo(
+      title: "iOS Native Swift",
+      description: "Native iOS app development using Swift, following Apple's design guidelines and best practices.",
+      iconPath: "",
+    ),
+    ServiceInfo(
+      title: "Android",
+      description: "Native Android app development using Kotlin and Java, optimized for performance and user experience.",
+      iconPath: "",
+    ),
   ];
 
   // Projects - YouTube video IDs and descriptions
