@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
 import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:provider/provider.dart';
+import 'package:characters/characters.dart';
 
 class MessagesManagerScreen extends StatefulWidget {
   const MessagesManagerScreen({super.key});
@@ -55,57 +56,63 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Messages',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'View and manage contact form submissions',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              // Header section
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Messages',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'View and manage contact form submissions',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Error message
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.red),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+              const SizedBox(height: 32),
+              
+              // Error message
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _errorMessage = null;
-                        });
-                      },
-                    ),
-                  ],
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _errorMessage = null;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
+              
+              // Messages content
+              Expanded(
+                child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildMessagesContent(),
               ),
-            
-            // Messages content
-            Expanded(
-              child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _buildMessagesContent(),
-            ),
           ],
         ),
       ),
@@ -118,30 +125,66 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.email, color: Colors.grey, size: 48),
+            Icon(
+              Icons.email,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              size: 64,
+            ),
             const SizedBox(height: 16),
             Text(
               'No messages found',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.grey,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            const Text('When someone contacts you, messages will appear here'),
+            Text(
+              'When someone contacts you, messages will appear here',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
           ],
         ),
       );
     }
     
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Messages list (left side)
-        Expanded(
-          flex: 2,
-          child: Card(
-            elevation: 1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 900;
+        
+        if (isMobile) {
+          // Mobile: Show list or detail based on selection
+          if (_selectedMessage != null) {
+            return Column(
+              children: [
+                // Back button
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        setState(() {
+                          _selectedMessage = null;
+                        });
+                      },
+                    ),
+                    const Text('Back to messages'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Message detail
+                Expanded(child: _buildMessageDetail()),
+              ],
+            );
+          }
+          
+          // Mobile: Show messages list
+          return Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _messages.length,
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
@@ -151,33 +194,36 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                   ? DateFormat('MMM d, yyyy • h:mm a').format(timestamp.toDate())
                   : 'Unknown date';
                 
-                final isSelected = _selectedMessage != null && 
-                                 _selectedMessage!['id'] == message['id'];
-                
                 return ListTile(
-                  selected: isSelected,
-                  selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   leading: CircleAvatar(
-                    backgroundColor: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey.shade200,
-                    child: Icon(
-                      Icons.person,
-                      color: isSelected ? Colors.white : Colors.grey,
+                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    child: Text(
+                      (message['name'] as String?)?.isNotEmpty == true
+                        ? (message['name'] as String).characters.first.toUpperCase()
+                        : '?',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   title: Text(
                     message['name'] ?? 'Unknown',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 4),
                       Text(
                         message['subject'] ?? 'No subject',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
                         formattedDate,
                         style: TextStyle(
@@ -187,6 +233,10 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                       ),
                     ],
                   ),
+                  trailing: Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                  ),
                   onTap: () {
                     setState(() {
                       _selectedMessage = message;
@@ -195,21 +245,125 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                 );
               },
             ),
-          ),
-        ),
+          );
+        }
         
-        const SizedBox(width: 16),
-        
-        // Message detail (right side)
-        Expanded(
-          flex: 3,
-          child: _selectedMessage != null
-            ? _buildMessageDetail()
-            : const Center(
-                child: Text('Select a message to view details'),
+        // Desktop: Side by side layout
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Messages list (left side)
+            Expanded(
+              flex: 2,
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _messages.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    final timestamp = message['timestamp'] as Timestamp?;
+                    final formattedDate = timestamp != null 
+                      ? DateFormat('MMM d, yyyy • h:mm a').format(timestamp.toDate())
+                      : 'Unknown date';
+                    
+                    final isSelected = _selectedMessage != null && 
+                                     _selectedMessage!['id'] == message['id'];
+                    
+                    return ListTile(
+                      selected: isSelected,
+                      selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      leading: CircleAvatar(
+                        backgroundColor: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        child: Text(
+                          (message['name'] as String?)?.isNotEmpty == true
+                            ? (message['name'] as String).characters.first.toUpperCase()
+                            : '?',
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        message['name'] ?? 'Unknown',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(
+                            message['subject'] ?? 'No subject',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _selectedMessage = message;
+                        });
+                      },
+                    );
+                  },
+                ),
               ),
-        ),
-      ],
+            ),
+            
+            const SizedBox(width: 16),
+            
+            // Message detail (right side)
+            Expanded(
+              flex: 3,
+              child: _selectedMessage != null
+                ? _buildMessageDetail()
+                : Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.email_outlined,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Select a message to view details',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -223,7 +377,10 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
       : 'Unknown date';
     
     return Card(
-      elevation: 1,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -237,25 +394,69 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                   date,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 13,
                   ),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      tooltip: 'Delete',
-                      onPressed: () => _confirmDelete(message),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor.withOpacity(0.2),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.reply),
-                      tooltip: 'Reply',
-                      onPressed: () => _replyToMessage(message),
-                    ),
-                  ],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            bottomLeft: Radius.circular(8),
+                          ),
+                          onTap: () => _replyToMessage(message),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            child: Icon(
+                              Icons.reply,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(8),
+                            bottomRight: Radius.circular(8),
+                          ),
+                          onTap: () => _confirmDelete(message),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            child: const Icon(
+                              Icons.delete,
+                              size: 18,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            const Divider(),
+            const SizedBox(height: 16),
+            Divider(
+              color: Theme.of(context).dividerColor.withOpacity(0.2),
+            ),
             
             // From
             const SizedBox(height: 16),
@@ -328,12 +529,13 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
             const SizedBox(height: 8),
             Expanded(
               child: Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor,
+                    color: Theme.of(context).dividerColor.withOpacity(0.2),
                   ),
                 ),
                 child: SingleChildScrollView(

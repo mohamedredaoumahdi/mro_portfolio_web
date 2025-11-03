@@ -26,30 +26,74 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Services Manager',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _showServiceForm(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add New Service'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create and manage services for your portfolio',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              // Header section
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 600;
+                  
+                  if (isMobile) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Services Manager',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Create and manage services for your portfolio',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _showServiceForm(context),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add New Service'),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Services Manager',
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Create and manage services for your portfolio',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => _showServiceForm(context),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add New Service'),
+                      ),
+                    ],
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Error message
+              const SizedBox(height: 32),
+              
+              // Error message
             if (_errorMessage != null)
               Container(
                 padding: const EdgeInsets.all(16),
@@ -80,13 +124,13 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                   ],
                 ),
               ),
-            
-            // Services list
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildServicesList(context),
-            ),
+              
+              // Services list
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildServicesList(context),
+              ),
           ],
         ),
       ),
@@ -105,18 +149,28 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 48,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Error loading services',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                Text(serviceViewModel.errorMessage!),
+                Text(
+                  serviceViewModel.errorMessage!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () => serviceViewModel.loadServices(),
-                  child: const Text('Retry'),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
                 ),
               ],
             ),
@@ -128,14 +182,23 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.design_services, color: Colors.grey, size: 48),
+                Icon(
+                  Icons.design_services,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  size: 64,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'No services found',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                const Text('Add your first service using the button above'),
+                Text(
+                  'Add your first service using the button above',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
               ],
             ),
           );
@@ -143,6 +206,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
         
         return ReorderableListView.builder(
           itemCount: serviceViewModel.services.length,
+          buildDefaultDragHandles: false,
           onReorder: (oldIndex, newIndex) {
             // Handle reordering
             if (oldIndex < newIndex) {
@@ -150,71 +214,288 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
             }
             // TODO: Implement reordering logic to update the database
           },
+          proxyDecorator: (child, index, animation) {
+            return Material(
+              elevation: 6,
+              color: Colors.transparent,
+              child: child,
+            );
+          },
           itemBuilder: (context, index) {
             final service = serviceViewModel.services[index];
-            return Card(
+            
+            return Container(
               key: Key(service.id),
-              margin: const EdgeInsets.only(bottom: 16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    // Service icon
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 600;
+                  final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
+                  
+                  // Responsive constraints and margins
+                  final maxWidth = isMobile 
+                      ? double.infinity 
+                      : isTablet 
+                          ? 700.0 
+                          : 800.0;
+                  final horizontalMargin = isMobile 
+                      ? 0.0 
+                      : isTablet 
+                          ? 40.0 
+                          : 120.0;
+                  
+                  return Container(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    margin: EdgeInsets.symmetric(
+                      horizontal: horizontalMargin, 
+                      vertical: isMobile ? 8 : 6,
+                    ),
+                    child: Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
-                        _getIconData(service.iconPath),
-                        color: Theme.of(context).colorScheme.primary,
+                      child: Padding(
+                        padding: EdgeInsets.all(isMobile ? 12 : 16),
+                        child: isMobile
+                            ? // Mobile: Stacked layout
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      // Reorder handle
+                                      ReorderableDragStartListener(
+                                        index: index,
+                                        child: MouseRegion(
+                                          cursor: SystemMouseCursors.grab,
+                                          child: Icon(
+                                            Icons.drag_handle,
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      // Service icon
+                                      Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Icon(
+                                          _getIconData(service.iconPath),
+                                          color: Theme.of(context).colorScheme.primary,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      // Service title
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () {
+                                            _selectedService = service;
+                                            _showServiceForm(context, isEditing: true);
+                                          },
+                                          child: Text(
+                                            service.title,
+                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Action buttons
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius: const BorderRadius.only(
+                                                topLeft: Radius.circular(8),
+                                                bottomLeft: Radius.circular(8),
+                                              ),
+                                              onTap: () {
+                                                _selectedService = service;
+                                                _showServiceForm(context, isEditing: true);
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(8),
+                                                child: Icon(
+                                                  Icons.edit,
+                                                  size: 16,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 1,
+                                            height: 20,
+                                            color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                          ),
+                                          Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius: const BorderRadius.only(
+                                                topRight: Radius.circular(8),
+                                                bottomRight: Radius.circular(8),
+                                              ),
+                                              onTap: () {
+                                                _showDeleteConfirmation(context, service);
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(8),
+                                                child: const Icon(
+                                                  Icons.delete,
+                                                  size: 16,
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : // Desktop/Tablet: Horizontal layout
+                              Row(
+                                children: [
+                                  // Reorder handle - inside card
+                                  ReorderableDragStartListener(
+                                    index: index,
+                                    child: MouseRegion(
+                                      cursor: SystemMouseCursors.grab,
+                                      child: Icon(
+                                        Icons.drag_handle,
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: isTablet ? 8 : 12),
+                                  
+                                  // Service icon
+                                  Container(
+                                    width: isTablet ? 45 : 50,
+                                    height: isTablet ? 45 : 50,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      _getIconData(service.iconPath),
+                                      color: Theme.of(context).colorScheme.primary,
+                                      size: isTablet ? 22 : 24,
+                                    ),
+                                  ),
+                                  SizedBox(width: isTablet ? 12 : 16),
+                                  
+                                  // Service title
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () {
+                                        _selectedService = service;
+                                        _showServiceForm(context, isEditing: true);
+                                      },
+                                      child: Text(
+                                        service.title,
+                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: isTablet ? 18 : null,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                  SizedBox(width: isTablet ? 8 : 12),
+                                  
+                                  // Action buttons - better styled
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: const BorderRadius.only(
+                                              topLeft: Radius.circular(8),
+                                              bottomLeft: Radius.circular(8),
+                                            ),
+                                            onTap: () {
+                                              _selectedService = service;
+                                              _showServiceForm(context, isEditing: true);
+                                            },
+                                            child: Container(
+                                              padding: EdgeInsets.all(isTablet ? 8 : 10),
+                                              child: Icon(
+                                                Icons.edit,
+                                                size: isTablet ? 16 : 18,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1,
+                                          height: isTablet ? 20 : 24,
+                                          color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                        ),
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: const BorderRadius.only(
+                                              topRight: Radius.circular(8),
+                                              bottomRight: Radius.circular(8),
+                                            ),
+                                            onTap: () {
+                                              _showDeleteConfirmation(context, service);
+                                            },
+                                            child: Container(
+                                              padding: EdgeInsets.all(isTablet ? 8 : 10),
+                                              child: Icon(
+                                                Icons.delete,
+                                                size: isTablet ? 16 : 18,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    
-                    // Service details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            service.title,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            service.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    // Action buttons
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            _selectedService = service;
-                            _showServiceForm(context, isEditing: true);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _showDeleteConfirmation(context, service),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             );
           },

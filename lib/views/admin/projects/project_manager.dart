@@ -28,67 +28,111 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Projects Manager',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _showProjectForm(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add New Project'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create and manage projects for your portfolio',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Error message
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.red),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+              // Header section
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 600;
+                  
+                  if (isMobile) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Projects Manager',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Create and manage projects for your portfolio',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _showProjectForm(context),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add New Project'),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Projects Manager',
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Create and manage projects for your portfolio',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _errorMessage = null;
-                        });
-                      },
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => _showProjectForm(context),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add New Project'),
+                      ),
+                    ],
+                  );
+                },
               ),
+              const SizedBox(height: 32),
             
-            // Projects list
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildProjectsList(context),
-            ),
+              // Error message
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _errorMessage = null;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              
+              // Projects list
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildProjectsList(context),
+              ),
           ],
         ),
       ),
@@ -107,18 +151,28 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 48,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Error loading projects',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                Text(projectViewModel.errorMessage!),
+                Text(
+                  projectViewModel.errorMessage!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () => projectViewModel.loadProjects(),
-                  child: const Text('Retry'),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
                 ),
               ],
             ),
@@ -130,14 +184,23 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.folder_open, color: Colors.grey, size: 48),
+                Icon(
+                  Icons.folder_open,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  size: 64,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'No projects found',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                const Text('Add your first project using the button above'),
+                Text(
+                  'Add your first project using the button above',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
               ],
             ),
           );
@@ -145,6 +208,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
         
         return ReorderableListView.builder(
           itemCount: projectViewModel.projects.length,
+          buildDefaultDragHandles: false,
           onReorder: (oldIndex, newIndex) {
             // Handle reordering
             if (oldIndex < newIndex) {
@@ -160,89 +224,299 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
               });
             });
           },
+          proxyDecorator: (child, index, animation) {
+            return Material(
+              elevation: 6,
+              color: Colors.transparent,
+              child: child,
+            );
+          },
           itemBuilder: (context, index) {
             final project = projectViewModel.projects[index];
-            return Card(
+            
+            return Container(
               key: Key(project.id),
-              margin: const EdgeInsets.only(bottom: 16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    // Project thumbnail from YouTube
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        'https://img.youtube.com/vi/${project.youtubeVideoId}/mqdefault.jpg',
-                        width: 120,
-                        height: 80,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 120,
-                            height: 80,
-                            color: Colors.grey.shade300,
-                            child: const Icon(Icons.image_not_supported),
-                          );
-                        },
-                      ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 600;
+                  final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
+                  
+                  // Responsive constraints and margins
+                  final maxWidth = isMobile 
+                      ? double.infinity 
+                      : isTablet 
+                          ? 700.0 
+                          : 800.0;
+                  final horizontalMargin = isMobile 
+                      ? 0.0 
+                      : isTablet 
+                          ? 40.0 
+                          : 120.0;
+                  
+                  return Container(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                  margin: EdgeInsets.symmetric(
+                    horizontal: horizontalMargin, 
+                    vertical: isMobile ? 8 : 6,
+                  ),
+                  child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 16),
-                    
-                    // Project details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            project.title,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                    child: Padding(
+                      padding: EdgeInsets.all(isMobile ? 12 : 16),
+                      child: isMobile
+                          ? // Mobile: Stacked layout
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    // Reorder handle
+                                    ReorderableDragStartListener(
+                                      index: index,
+                                      child: MouseRegion(
+                                        cursor: SystemMouseCursors.grab,
+                                        child: Icon(
+                                          Icons.drag_handle,
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Project thumbnail
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        'https://img.youtube.com/vi/${project.youtubeVideoId}/mqdefault.jpg',
+                                        width: 80,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 80,
+                                            height: 60,
+                                            color: Colors.grey.shade300,
+                                            child: const Icon(Icons.image_not_supported, size: 24),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // Project title
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () {
+                                          _selectedProject = project;
+                                          _showProjectForm(context, isEditing: true);
+                                        },
+                                        child: Text(
+                                          project.title,
+                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                // Action buttons
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: const BorderRadius.only(
+                                              topLeft: Radius.circular(8),
+                                              bottomLeft: Radius.circular(8),
+                                            ),
+                                            onTap: () {
+                                              _selectedProject = project;
+                                              _showProjectForm(context, isEditing: true);
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Icon(
+                                                Icons.edit,
+                                                size: 16,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1,
+                                          height: 20,
+                                          color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                        ),
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: const BorderRadius.only(
+                                              topRight: Radius.circular(8),
+                                              bottomRight: Radius.circular(8),
+                                            ),
+                                            onTap: () {
+                                              _showDeleteConfirmation(context, project);
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              child: const Icon(
+                                                Icons.delete,
+                                                size: 16,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : // Desktop/Tablet: Horizontal layout
+                            Row(
+                              children: [
+                                // Reorder handle - inside card
+                                ReorderableDragStartListener(
+                                  index: index,
+                                  child: MouseRegion(
+                                    cursor: SystemMouseCursors.grab,
+                                    child: Icon(
+                                      Icons.drag_handle,
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: isTablet ? 8 : 12),
+                                
+                                // Project thumbnail from YouTube
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    'https://img.youtube.com/vi/${project.youtubeVideoId}/mqdefault.jpg',
+                                    width: isTablet ? 100 : 120,
+                                    height: isTablet ? 65 : 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: isTablet ? 100 : 120,
+                                        height: isTablet ? 65 : 80,
+                                        color: Colors.grey.shade300,
+                                        child: Icon(
+                                          Icons.image_not_supported, 
+                                          size: isTablet ? 28 : 32,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                SizedBox(width: isTablet ? 12 : 16),
+                                
+                                // Project title
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      _selectedProject = project;
+                                      _showProjectForm(context, isEditing: true);
+                                    },
+                                    child: Text(
+                                      project.title,
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: isTablet ? 18 : null,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                
+                                SizedBox(width: isTablet ? 8 : 12),
+                                
+                                // Action buttons - better styled
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(8),
+                                            bottomLeft: Radius.circular(8),
+                                          ),
+                                          onTap: () {
+                                            _selectedProject = project;
+                                            _showProjectForm(context, isEditing: true);
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.all(isTablet ? 8 : 10),
+                                            child: Icon(
+                                              Icons.edit,
+                                              size: isTablet ? 16 : 18,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 1,
+                                        height: isTablet ? 20 : 24,
+                                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                      ),
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: const BorderRadius.only(
+                                            topRight: Radius.circular(8),
+                                            bottomRight: Radius.circular(8),
+                                          ),
+                                          onTap: () {
+                                            _showDeleteConfirmation(context, project);
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.all(isTablet ? 8 : 10),
+                                            child: Icon(
+                                              Icons.delete,
+                                              size: isTablet ? 16 : 18,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            project.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: project.technologies.map((tech) {
-                              return Chip(
-                                label: Text(tech),
-                                labelStyle: const TextStyle(fontSize: 12),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                padding: EdgeInsets.zero,
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
                     ),
-                    
-                    // Action buttons
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            _selectedProject = project;
-                            _showProjectForm(context, isEditing: true);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _showDeleteConfirmation(context, project),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                );
+              },
               ),
             );
           },
