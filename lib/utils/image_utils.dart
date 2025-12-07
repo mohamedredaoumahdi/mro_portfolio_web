@@ -39,19 +39,19 @@ class ImageUtils {
       
       // Check size of image
       final double sizeInKB = imageBytes.length / 1024;
-      print('Original image size: ${sizeInKB.toStringAsFixed(2)} KB');
+      debugPrint('Original image size: ${sizeInKB.toStringAsFixed(2)} KB');
       
       // Compress image to reduce size
       final compressedBytes = await _compressImage(imageBytes, quality);
       final compressedSizeInKB = compressedBytes.length / 1024;
-      print('Compressed image size: ${compressedSizeInKB.toStringAsFixed(2)} KB');
+      debugPrint('Compressed image size: ${compressedSizeInKB.toStringAsFixed(2)} KB');
       
       // If still too large, reduce quality further
       Uint8List finalBytes = compressedBytes;
       if (compressedSizeInKB > _maxImageSizeKB) {
         final lowerQuality = quality > 70 ? quality - 20 : 50;
         finalBytes = await _compressImage(compressedBytes, lowerQuality);
-        print('Further compressed image size: ${(finalBytes.length / 1024).toStringAsFixed(2)} KB');
+        debugPrint('Further compressed image size: ${(finalBytes.length / 1024).toStringAsFixed(2)} KB');
       }
       
       // Generate unique ID
@@ -66,7 +66,7 @@ class ImageUtils {
         caption: caption,
       );
     } catch (e) {
-      print('Error picking image: $e');
+      debugPrint('Error picking image: $e');
       return null;
     }
   }
@@ -85,7 +85,7 @@ class ImageUtils {
         'quality': quality,
       });
     } catch (e) {
-      print('Error compressing image: $e');
+      debugPrint('Error compressing image: $e');
       // Return original bytes if compression fails
       return bytes;
     }
@@ -141,7 +141,7 @@ class ImageUtils {
       try {
         bytes = base64Decode(base64String);
       } catch (e) {
-        print('Error decoding base64: $e');
+        debugPrint('Error decoding base64: $e');
         return errorWidget ?? const Icon(Icons.broken_image, size: 40);
       }
       
@@ -151,7 +151,7 @@ class ImageUtils {
         height: height,
         fit: fit,
         errorBuilder: (context, error, stackTrace) {
-          print('Error rendering image: $error');
+          debugPrint('Error rendering image: $error');
           return errorWidget ?? const Icon(Icons.broken_image, size: 40);
         },
         // Add fadeIn animation for better UX
@@ -170,7 +170,7 @@ class ImageUtils {
         cacheHeight: height?.toInt(),
       );
     } catch (e) {
-      print('Error converting base64 to image: $e');
+      debugPrint('Error converting base64 to image: $e');
       return errorWidget ?? const Icon(Icons.broken_image, size: 40);
     }
   }

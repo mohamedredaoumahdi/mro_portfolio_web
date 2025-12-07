@@ -42,13 +42,13 @@ class ActivityViewModel extends ChangeNotifier {
             _errorMessage = 'Error loading activities: $e';
             _isLoading = false;
             notifyListeners();
-            print('Activity stream error: $e');
+            debugPrint('Activity stream error: $e');
           });
     } catch (e) {
       _errorMessage = 'Error setting up activity stream: $e';
       _isLoading = false;
       notifyListeners();
-      print('Error in ActivityViewModel: $e');
+      debugPrint('Error in ActivityViewModel: $e');
     }
   }
   
@@ -96,7 +96,7 @@ class ActivityViewModel extends ChangeNotifier {
         'metadata': activity.metadata,
       }).toList();
     } catch (e) {
-      print('Error fetching recent activities: $e');
+      debugPrint('Error fetching recent activities: $e');
       return [];
     }
   }

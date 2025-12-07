@@ -27,7 +27,7 @@ class ProgressiveImage extends StatelessWidget {
     final defaultPlaceholder = Container(
       width: width,
       height: height,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.2),
+      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
       child: Center(
         child: SizedBox(
           width: 30,
@@ -43,7 +43,7 @@ class ProgressiveImage extends StatelessWidget {
     final defaultErrorWidget = Container(
       width: width,
       height: height,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
       child: Center(
         child: Icon(
           Icons.image_not_supported,

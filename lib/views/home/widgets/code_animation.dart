@@ -12,7 +12,6 @@ class CodeAnimation extends StatefulWidget {
 
 class _CodeAnimationState extends State<CodeAnimation> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  final bool _isActive = true;
   Timer? _timer;
   late final AnimationController _fadeController;
   
@@ -28,7 +27,7 @@ class Portfolio {
   });
   
   void showcase() {
-    print("Welcome to my portfolio!");
+    debugPrint("Welcome to my portfolio!");
     for (var project in projects) {
       project.display();
     }
@@ -46,7 +45,7 @@ Future<void> buildApp() async {
   );
   
   await app.run();
-  print("App launched successfully!");
+  debugPrint("App launched successfully!");
 }
 ''',
     '''
@@ -147,12 +146,12 @@ Widget build(BuildContext context) {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDarkMode 
-              ? Colors.black.withOpacity(0.7)
-              : Colors.white.withOpacity(0.9),
+              ? Colors.black.withValues(alpha: 0.7)
+              : Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
               blurRadius: 20,
               spreadRadius: 5,
             ),
@@ -200,8 +199,8 @@ Widget build(BuildContext context) {
                   'code_sample.dart',
                   style: TextStyle(
                     color: isDarkMode 
-                        ? Colors.white.withOpacity(0.7) 
-                        : Colors.black.withOpacity(0.7),
+                        ? Colors.white.withValues(alpha: 0.7) 
+                        : Colors.black.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),

@@ -46,7 +46,7 @@ class _ProjectSkeletonState extends State<ProjectSkeleton>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
               width: 2,
             ),
           ),

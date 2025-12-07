@@ -40,12 +40,20 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // Check if Firebase is available
+  // Cached Firebase availability check
+  static bool? _cachedFirebaseStatus;
+  
   bool get _isFirebaseAvailable {
+    if (_cachedFirebaseStatus != null) {
+      return _cachedFirebaseStatus!;
+    }
+    
     try {
-      return Firebase.apps.isNotEmpty;
+      _cachedFirebaseStatus = Firebase.apps.isNotEmpty;
+      return _cachedFirebaseStatus!;
     } catch (e) {
-      print('Firebase availability check error: $e');
+      debugPrint('Firebase availability check error: $e');
+      _cachedFirebaseStatus = false;
       return false;
     }
   }
@@ -68,14 +76,14 @@ class ProfileViewModel extends ChangeNotifier {
           _setupRealTimeListener();
           return; // Early return as listener will handle updates
         } catch (e) {
-          print('Error setting up Firestore listener: $e - Falling back to local config');
+          debugPrint('Error setting up Firestore listener: $e - Falling back to local config');
           // Firebase error - fall back to local config
           _loadFromAppConfig();
         }
       } else {
         // Firebase not available - use local config
         _loadFromAppConfig();
-        print('Firebase not available, using AppConfig fallback');
+        debugPrint('Firebase not available, using AppConfig fallback');
       }
 
       _isLoading = false;
@@ -84,13 +92,13 @@ class ProfileViewModel extends ChangeNotifier {
       _isLoading = false;
       _errorMessage = 'Failed to load profile data: ${e.toString()}';
       notifyListeners();
-      print('Error in ProfileViewModel: $_errorMessage');
+      debugPrint('Error in ProfileViewModel: $_errorMessage');
     }
   }
   
   // Set up real-time listener for personal_info document
   void _setupRealTimeListener() {
-    print('Setting up real-time listener for personal info...');
+    debugPrint('Setting up real-time listener for personal info...');
     
     // Cancel existing subscription if any
     _subscription?.cancel();
@@ -104,20 +112,20 @@ class ProfileViewModel extends ChangeNotifier {
           .listen((docSnapshot) {
             if (docSnapshot.exists) {
               final data = docSnapshot.data() as Map<String, dynamic>;
-              print('Real-time update for personal info: ${data['title']}');
+              debugPrint('Real-time update for personal info: ${data['title']}');
               
               _personalInfo = data;
               _isLoading = false;
               _errorMessage = null;
               notifyListeners();
             } else {
-              print('personal_info document does not exist, falling back to AppConfig');
+              debugPrint('personal_info document does not exist, falling back to AppConfig');
               _loadFromAppConfig();
               _isLoading = false;
               notifyListeners();
             }
           }, onError: (e) {
-            print('Error in real-time listener: $e');
+            debugPrint('Error in real-time listener: $e');
             _errorMessage = 'Error loading profile data: $e';
             _loadFromAppConfig();
             _isLoading = false;
@@ -127,14 +135,14 @@ class ProfileViewModel extends ChangeNotifier {
       // Set timeout for initial data fetch
       Timer(const Duration(seconds: 5), () {
         if (_isLoading) {
-          print('Firebase profile data fetch timed out, falling back to AppConfig');
+          debugPrint('Firebase profile data fetch timed out, falling back to AppConfig');
           _loadFromAppConfig();
           _isLoading = false;
           notifyListeners();
         }
       });
     } catch (e) {
-      print('Exception setting up personal info listener: $e');
+      debugPrint('Exception setting up personal info listener: $e');
       _errorMessage = 'Error setting up profile data listener: $e';
       _loadFromAppConfig();
       _isLoading = false;
@@ -144,7 +152,7 @@ class ProfileViewModel extends ChangeNotifier {
   
   // Load data from AppConfig as fallback
   void _loadFromAppConfig() {
-    print('Loading profile data from AppConfig fallback');
+    debugPrint('Loading profile data from AppConfig fallback');
     _personalInfo = {
       'name': AppConfig.name,
       'title': AppConfig.title,

@@ -1,7 +1,9 @@
 // lib/views/projects/widgets/project_card.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../../../models/project_model.dart';
+import '../../../utils/app_constants.dart';
 
 // Consistent purple colors
 class CardColors {
@@ -28,7 +30,11 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
   late Animation<double> _elevationAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _borderAnimation;
-  late YoutubePlayerController _youtubeController;
+  
+  // Lazy initialization - only create controller when user taps to play
+  YoutubePlayerController? _youtubeController;
+  bool _isControllerInitialized = false;
+  bool _isLoadingPlayer = false;
 
   @override
   void initState() {
@@ -36,18 +42,24 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
     
     // Initialize animation controller for hover effect
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: AppConstants.animationNormal,
       vsync: this,
     );
     
-    _elevationAnimation = Tween<double>(begin: 8, end: 20).animate(
+    _elevationAnimation = Tween<double>(
+      begin: AppConstants.cardElevation, 
+      end: AppConstants.cardHoverElevation
+    ).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeOutCubic,
       ),
     );
     
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+    _scaleAnimation = Tween<double>(
+      begin: 1.0, 
+      end: AppConstants.cardScaleOnHover
+    ).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeOutCubic,
@@ -61,21 +73,138 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
       ),
     );
     
-    // Initialize YouTube player controller with basic settings
-    _youtubeController = YoutubePlayerController.fromVideoId(
-      videoId: widget.project.youtubeVideoId,
-      params: const YoutubePlayerParams(
-        showControls: true,
-        showFullscreenButton: true,
-        mute: false,
-      ),
+    // Don't initialize YouTube controller here - lazy load it
+  }
+
+  /// Initialize YouTube controller only when user taps to play
+  void _initializeYoutubeController() async {
+    if (!_isControllerInitialized && 
+        widget.project.youtubeVideoId.isNotEmpty &&
+        mounted) {
+      try {
+        _youtubeController = YoutubePlayerController.fromVideoId(
+          videoId: widget.project.youtubeVideoId,
+          params: const YoutubePlayerParams(
+            showControls: true,
+            showFullscreenButton: true,
+            mute: true, // Mute by default for better UX
+          ),
+        );
+        
+        // Wait a bit for the controller to initialize
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        if (mounted) {
+          setState(() {
+            _isControllerInitialized = true;
+            _isLoadingPlayer = false;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error initializing YouTube controller: $e');
+        if (mounted) {
+          setState(() {
+            _isLoadingPlayer = false;
+          });
+        }
+      }
+    }
+  }
+  
+  /// Build video content (thumbnail, loading, or player)
+  Widget _buildVideoContent() {
+    // Show YouTube player if initialized
+    if (_youtubeController != null && _isControllerInitialized) {
+      return YoutubePlayer(
+        controller: _youtubeController!,
+      );
+    }
+    
+    // Show loading indicator while initializing
+    if (_isLoadingPlayer) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          // Keep thumbnail visible but dimmed during loading
+          Opacity(
+            opacity: 0.3,
+            child: Image.network(
+              widget.project.youtubeThumbnail,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.play_circle_outline, size: 64),
+                );
+              },
+            ),
+          ),
+          // Loading indicator overlay
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.7),
+                shape: BoxShape.circle,
+              ),
+              child: const SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    
+    // Show thumbnail with play button
+    return _buildThumbnailPlaceholder();
+  }
+  
+  /// Build thumbnail placeholder widget
+  Widget _buildThumbnailPlaceholder() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Show thumbnail image
+        Image.network(
+          widget.project.youtubeThumbnail,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey[300],
+              child: const Icon(Icons.play_circle_outline, size: 64),
+            );
+          },
+        ),
+        // Play button overlay
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.play_arrow,
+              color: Colors.white,
+              size: 48,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _youtubeController.close();
+    _youtubeController?.close();
+    _youtubeController = null;
     super.dispose();
   }
 
@@ -83,51 +212,66 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    // Cache the card content to prevent rebuilds
+    final cardContent = _buildCardContent(context);
+    
     return MouseRegion(
       onEnter: (_) {
-        _animationController.forward();
+        if (mounted) {
+          _animationController.forward();
+        }
       },
       onExit: (_) {
-        _animationController.reverse();
+        if (mounted) {
+          _animationController.reverse();
+        }
       },
       child: AnimatedBuilder(
         animation: _animationController,
-        builder: (context, child) => Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).cardColor.withValues(alpha: 0.9),
-                  Theme.of(context).cardColor.withValues(alpha: 0.7),
+        builder: (context, _) {
+          // Only rebuild the animated parts (scale, elevation, border)
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Theme.of(context).cardColor.withValues(alpha: 0.9),
+                    Theme.of(context).cardColor.withValues(alpha: 0.7),
+                  ],
+                ),
+                border: Border.all(
+                  color: CardColors.accentPurple.withValues(alpha: _borderAnimation.value),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: CardColors.primaryPurple.withValues(alpha: 0.1),
+                    blurRadius: _elevationAnimation.value,
+                    offset: Offset(0, _elevationAnimation.value / 2),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: _elevationAnimation.value * 1.5,
+                    offset: Offset(0, _elevationAnimation.value),
+                  ),
                 ],
               ),
-              border: Border.all(
-                color: CardColors.accentPurple.withValues(alpha: _borderAnimation.value),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: CardColors.primaryPurple.withValues(alpha: 0.1),
-                  blurRadius: _elevationAnimation.value,
-                  offset: Offset(0, _elevationAnimation.value / 2),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: _elevationAnimation.value * 1.5,
-                  offset: Offset(0, _elevationAnimation.value),
-                ),
-              ],
+              clipBehavior: Clip.antiAlias,
+              child: cardContent, // Use cached content
             ),
-            clipBehavior: Clip.antiAlias,
-            child: child,
-          ),
-        ),
-        child: LayoutBuilder(
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildCardContent(BuildContext context) {
+    return LayoutBuilder(
           builder: (context, constraints) {
             // Add bounds checking to prevent assertion failures
             final maxWidth = constraints.maxWidth;
@@ -176,28 +320,37 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: isInListView ? MainAxisSize.min : MainAxisSize.max,
               children: [
-                // Responsive YouTube Video container
-                Container(
-                  width: double.infinity,
-                  height: isInListView ? videoHeight : videoHeight.clamp(150.0, 400.0), // No clamp needed for ListView
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(18),
-                      topRight: Radius.circular(18),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                // Responsive YouTube Video container - only load on user tap
+                GestureDetector(
+                  onTap: () {
+                    // Initialize controller only when user taps to play
+                    if (!_isControllerInitialized && !_isLoadingPlayer && widget.project.youtubeVideoId.isNotEmpty) {
+                      setState(() {
+                        _isLoadingPlayer = true;
+                      });
+                      _initializeYoutubeController();
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: isInListView ? videoHeight : videoHeight.clamp(150.0, 400.0),
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(18),
+                        topRight: Radius.circular(18),
                       ),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: _buildVideoContent(),
+                    ),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: YoutubePlayer(
-                    controller: _youtubeController,
-                  ),
-                ),
                 
                 // Flexible content container - use Expanded only in GridView, normal Container in ListView
                 isInListView ? Container(
@@ -443,8 +596,6 @@ class _ProjectCardState extends State<ProjectCard> with SingleTickerProviderStat
               ],
             );
           },
-        ),
-      ),
-    );
+        );
   }
 }

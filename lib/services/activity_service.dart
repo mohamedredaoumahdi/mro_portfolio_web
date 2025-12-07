@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:portfolio_website/models/activity_model.dart';
@@ -10,14 +11,9 @@ class ActivityService {
   final FirebaseFirestore _firestore;
   final CollectionReference _activitiesCollection;
 
-  // Stream controller for managing the activities stream
-  StreamController<List<Activity>>? _streamController;
-  StreamSubscription? _firestoreStreamSubscription;
-  
-  // Retry configuration
-  final int _retryCount = 0;
-  static const int _maxRetries = 3;
-  static const Duration _retryDelay = Duration(seconds: 10);
+  // Retry configuration (kept for future use)
+  // static const int _maxRetries = 3;
+  // static const Duration _retryDelay = Duration(seconds: 10);
   
   // Private constructor for singleton
   ActivityService._internal() :
@@ -29,7 +25,7 @@ class ActivityService {
     try {
       return Firebase.apps.isNotEmpty;
     } catch (e) {
-      print('Firebase availability check error: $e');
+      debugPrint('Firebase availability check error: $e');
       return false;
     }
   }
@@ -42,7 +38,7 @@ class ActivityService {
     Map<String, dynamic>? metadata,
   }) async {
     if (!_isFirebaseAvailable) {
-      print('Activity not logged - Firebase unavailable');
+      debugPrint('Activity not logged - Firebase unavailable');
       return;
     }
     
@@ -60,9 +56,9 @@ class ActivityService {
           throw TimeoutException('Activity logging timed out');
         },
       );
-      print('Activity logged: $message');
+      debugPrint('Activity logged: $message');
     } catch (e) {
-      print('Error logging activity: $e');
+      debugPrint('Error logging activity: $e');
       // Don't rethrow - activity logging should be non-blocking
     }
   }
@@ -100,7 +96,7 @@ class ActivityService {
   // Get recent activities (one-time fetch) with error handling
   Future<List<Activity>> getRecentActivities({int limit = 10}) async {
     if (!_isFirebaseAvailable) {
-      print('Cannot fetch activities - Firebase unavailable');
+      debugPrint('Cannot fetch activities - Firebase unavailable');
       return [];
     }
     
@@ -120,7 +116,7 @@ class ActivityService {
           .map((doc) => Activity.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error fetching recent activities: $e');
+      debugPrint('Error fetching recent activities: $e');
       return [];
     }
   }
@@ -128,7 +124,7 @@ class ActivityService {
   // Get activities stream for real-time updates
   Stream<List<Activity>> getActivitiesStream({int limit = 10}) {
     if (!_isFirebaseAvailable) {
-      print('Cannot stream activities - Firebase unavailable');
+      debugPrint('Cannot stream activities - Firebase unavailable');
       return Stream.value([]);
     }
     
@@ -146,7 +142,7 @@ class ActivityService {
   // Clear old activities (for maintenance) with batched operations
   Future<void> clearOldActivities(int daysToKeep) async {
     if (!_isFirebaseAvailable) {
-      print('Cannot clear activities - Firebase unavailable');
+      debugPrint('Cannot clear activities - Firebase unavailable');
       return;
     }
     
@@ -158,7 +154,7 @@ class ActivityService {
           .where('timestamp', isLessThan: Timestamp.fromDate(cutoffDate))
           .get();
       
-      print('Found ${oldActivities.docs.length} old activities to clear');
+      debugPrint('Found ${oldActivities.docs.length} old activities to clear');
       
       if (oldActivities.docs.isEmpty) {
         return;
@@ -182,12 +178,12 @@ class ActivityService {
         }
         
         await batch.commit();
-        print('Cleared batch ${i+1}/$batchCount of old activities');
+        debugPrint('Cleared batch ${i+1}/$batchCount of old activities');
       }
       
-      print('Successfully cleared ${oldActivities.docs.length} old activities');
+      debugPrint('Successfully cleared ${oldActivities.docs.length} old activities');
     } catch (e) {
-      print('Error clearing old activities: $e');
+      debugPrint('Error clearing old activities: $e');
     }
   }
 }

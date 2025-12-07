@@ -28,12 +28,12 @@ class ThemeToggleButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: isInAppBar 
                   ? Colors.transparent 
-                  : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                  : Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(50),
               border: isInAppBar 
                   ? null 
                   : Border.all(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                       width: 1,
                     ),
             ),

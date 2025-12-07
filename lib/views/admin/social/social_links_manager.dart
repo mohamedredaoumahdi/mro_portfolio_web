@@ -234,7 +234,7 @@ Future<void> _saveSocialLinks() async {
             Text(
               'Add or update your social media and professional profiles',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
@@ -245,7 +245,7 @@ Future<void> _saveSocialLinks() async {
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.green),
                 ),
@@ -269,7 +269,7 @@ Future<void> _saveSocialLinks() async {
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.red),
                 ),
@@ -471,7 +471,7 @@ Future<void> _saveSocialLinks() async {
           height: 40,
           margin: const EdgeInsets.only(top: 8, right: 12),
           decoration: BoxDecoration(
-            color: (color ?? Theme.of(context).colorScheme.primary).withOpacity(0.1),
+            color: (color ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
 import 'package:portfolio_website/viewmodels/project_viewmodel.dart';
-import 'package:portfolio_website/viewmodels/contact_viewmodel.dart';
 import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -18,7 +17,7 @@ class EnhancedAnalyticsDashboardScreen extends StatefulWidget {
 class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDashboardScreen> with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   String? _errorMessage;
-  Map<String, dynamic> _analyticsData = {};
+  // Map<String, dynamic> _analyticsData = {}; // Reserved for future use
   
   // Stats for summary cards
   int _totalPageVisits = 0;
@@ -73,7 +72,6 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
       final visitsOverTime = await _processVisitsOverTime();
       
       setState(() {
-        _analyticsData = data;
         _activityData = activities;
         _visitsOverTime = visitsOverTime;
         
@@ -216,7 +214,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
             Text(
               'Track visitor interactions and engagement',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
@@ -227,7 +225,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.red),
                 ),
@@ -352,13 +350,13 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: color.withOpacity(0.1),
+                  backgroundColor: color.withValues(alpha: 0.1),
                   child: Icon(icon, color: color),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: trendUp ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                    color: trendUp ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -393,7 +391,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
             Text(
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -439,7 +437,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
           Text(
             'Track how your portfolio visits have changed over time',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 16),
@@ -455,7 +453,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                   drawHorizontalLine: true,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Colors.grey.withValues(alpha: 0.2),
                       strokeWidth: 1,
                     );
                   },
@@ -516,7 +514,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                 ),
                 borderData: FlBorderData(
                   show: true,
-                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                 ),
                 minX: 0,
                 maxX: spots.length.toDouble() - 1,
@@ -532,7 +530,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                     ),
                   ),
                 ],
@@ -873,14 +871,14 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: indicatorColor.withOpacity(0.2),
+                          backgroundColor: indicatorColor.withValues(alpha: 0.2),
                           child: Icon(indicatorIcon, color: indicatorColor, size: 20),
                         ),
                         if (index < _activityData.length - 1)
                           Container(
                             width: 2,
                             height: 30,
-                            color: Colors.grey.withOpacity(0.3),
+                            color: Colors.grey.withValues(alpha: 0.3),
                           ),
                       ],
                     ),
@@ -899,7 +897,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                           Text(
                             formattedDate,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                               fontSize: 12,
                             ),
                           ),
@@ -936,6 +934,8 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
   }
   
   // Method to create a donut chart for categorical data
+  // TODO: Available for future use
+  // ignore: unused_element
   Widget _buildDonutChart(Map<String, int> data) {
     if (data.isEmpty) {
       return const SizedBox(
@@ -977,6 +977,8 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
   }
   
   // Method to build a list of legend items for charts
+  // TODO: Available for future use
+  // ignore: unused_element
   Widget _buildLegend(Map<String, int> data) {
     return Wrap(
       spacing: 16,
@@ -1005,6 +1007,8 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
   }
   
   // Helper method to format dates for display
+  // TODO: Available for future use
+  // ignore: unused_element
   String _formatDate(DateTime date, {bool showTime = false}) {
     if (showTime) {
       return DateFormat('MMM d, yyyy h:mm a').format(date);
@@ -1014,9 +1018,10 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
   }
   
   // Build a heat map for showing data intensity across days
+  // TODO: Available for future use
+  // ignore: unused_element
   Widget _buildHeatMap() {
     // This would normally pull real data, but here we just generate sample data
-    final DateTime now = DateTime.now();
     
     // Generate a grid of data for the last 12 weeks (7 days x 12 weeks)
     final List<List<int>> heatmapData = [];
@@ -1065,7 +1070,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                           height: 12,
                           margin: const EdgeInsets.all(1),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(value / 30),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: value / 30),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         );
@@ -1091,7 +1096,7 @@ class _EnhancedAnalyticsDashboardScreenState extends State<EnhancedAnalyticsDash
                 height: 12,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(index / 4),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: index / 4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               );

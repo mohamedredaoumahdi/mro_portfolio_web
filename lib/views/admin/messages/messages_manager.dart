@@ -1,11 +1,11 @@
 // lib/views/admin/messages/messages_manager.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
 import 'package:portfolio_website/viewmodels/activity_viewmodel.dart';
 import 'package:provider/provider.dart';
-import 'package:characters/characters.dart';
 
 class MessagesManagerScreen extends StatefulWidget {
   const MessagesManagerScreen({super.key});
@@ -68,7 +68,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                   Text(
                     'View and manage contact form submissions',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -81,7 +81,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.red),
                   ),
@@ -127,7 +127,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
           children: [
             Icon(
               Icons.email,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
               size: 64,
             ),
             const SizedBox(height: 16),
@@ -139,7 +139,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
             Text(
               'When someone contacts you, messages will appear here',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -196,7 +196,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                 
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     child: Text(
                       (message['name'] as String?)?.isNotEmpty == true
                         ? (message['name'] as String).characters.first.toUpperCase()
@@ -228,14 +228,14 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                         formattedDate,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
                   ),
                   trailing: Icon(
                     Icons.chevron_right,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                   onTap: () {
                     setState(() {
@@ -276,11 +276,11 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                     
                     return ListTile(
                       selected: isSelected,
-                      selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       leading: CircleAvatar(
                         backgroundColor: isSelected
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         child: Text(
                           (message['name'] as String?)?.isNotEmpty == true
                             ? (message['name'] as String).characters.first.toUpperCase()
@@ -312,7 +312,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                             formattedDate,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -347,13 +347,13 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                           Icon(
                             Icons.email_outlined,
                             size: 64,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Select a message to view details',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -393,14 +393,14 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                 Text(
                   date,
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: 13,
                   ),
                 ),
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.2),
+                      color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -428,7 +428,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                       Container(
                         width: 1,
                         height: 24,
-                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                       ),
                       Material(
                         color: Colors.transparent,
@@ -455,7 +455,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
             ),
             const SizedBox(height: 16),
             Divider(
-              color: Theme.of(context).dividerColor.withOpacity(0.2),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
             ),
             
             // From
@@ -464,7 +464,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
               'From:',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 4),
@@ -472,7 +472,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   child: Text(
                     (message['name'] as String?)?.isNotEmpty == true
                       ? (message['name'] as String).characters.first.toUpperCase()
@@ -508,7 +508,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
               'Subject:',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 4),
@@ -523,7 +523,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
               'Message:',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
@@ -535,7 +535,7 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.2),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                   ),
                 ),
                 child: SingleChildScrollView(
@@ -640,6 +640,6 @@ class _MessagesManagerScreenState extends State<MessagesManagerScreen> {
 Future<bool> launchUrl(Uri uri) async {
   // In a real app, you would use url_launcher package
   // For now, just print and return true
-  print('Launching URL: $uri');
+  debugPrint('Launching URL: $uri');
   return true;
 }

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:portfolio_website/services/activity_service.dart';
-import 'package:portfolio_website/services/firebase_service.dart';
+import 'package:portfolio_website/services/firestore_service.dart';
 
 class ContactViewModel extends ChangeNotifier {
   bool _isSubmitting = false;
@@ -29,7 +29,7 @@ class ContactViewModel extends ChangeNotifier {
       return _cachedFirebaseStatus!;
     } catch (e) {
       _cachedFirebaseStatus = false;
-      print('Firebase availability check error: $e');
+      debugPrint('Firebase availability check error: $e');
       return false;
     }
   }
@@ -113,10 +113,10 @@ class ContactViewModel extends ChangeNotifier {
   // Submit form via Firebase
   Future<bool> _submitViaFirebase(Map<String, dynamic> formData, String name) async {
     try {
-      // Try to submit form to Firebase with a timeout
-      final result = await FirebaseService.instance.submitContactForm(formData)
+      // Try to submit form to Firestore with a timeout
+      final result = await FirestoreService.instance.submitContactForm(formData)
           .timeout(const Duration(seconds: 5), onTimeout: () {
-        throw TimeoutException('Firebase submission timed out');
+        throw TimeoutException('Firestore submission timed out');
       });
       
       if (result) {
@@ -133,12 +133,12 @@ class ContactViewModel extends ChangeNotifier {
         return _handleFailure('Failed to submit the form. Please try again later.');
       }
     } catch (e) {
-      print('Error submitting to Firebase: $e');
+      debugPrint('Error submitting to Firebase: $e');
       
       // Try to retry submission
       if (_retryCount < _maxRetries) {
         _retryCount++;
-        print('Retrying submission (attempt $_retryCount of $_maxRetries)');
+        debugPrint('Retrying submission (attempt $_retryCount of $_maxRetries)');
         await Future.delayed(const Duration(seconds: 2)); // Wait before retry
         return _submitViaFirebase(formData, name);
       }
@@ -162,7 +162,7 @@ class ContactViewModel extends ChangeNotifier {
       
       // Even if Firebase is unavailable, try to log locally
       if (kDebugMode) {
-        print('FORM SUBMISSION (Simulated): $formData');
+        debugPrint('FORM SUBMISSION (Simulated): $formData');
       }
       
       return true;

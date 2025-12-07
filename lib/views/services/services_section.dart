@@ -24,8 +24,8 @@ class ServicesSection extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: isDarkMode
               ? [
-                  Theme.of(context).colorScheme.surface.withOpacity(0.3),
-                  Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
                 ]
               : [
                   Colors.grey[50]!,
@@ -86,7 +86,7 @@ class ServicesSection extends StatelessWidget {
                         Text(
                           viewModel.errorMessage!,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.red.withOpacity(0.8),
+                            color: Colors.red.withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -341,6 +341,8 @@ class ServicesSection extends StatelessWidget {
     );
   }
 
+  // TODO: This method is available for future use with carousel layout
+  // ignore: unused_element
   Widget _buildServiceCarousel(BuildContext context, ServiceViewModel viewModel) {
     // Calculate viewport fraction for more than 4 services
     final double viewportFraction = (1.0 / viewModel.services.length) - 0.03;

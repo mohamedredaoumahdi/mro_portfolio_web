@@ -42,8 +42,13 @@ class ProjectsSection extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 60),
-            Consumer<ProjectViewModel>(
-              builder: (context, viewModel, child) {
+            Selector<ProjectViewModel, List<dynamic>>(
+              selector: (_, vm) => vm.projects,
+              shouldRebuild: (prev, next) => prev.length != next.length || 
+                prev.any((p) => !next.any((n) => n.id == p.id)),
+              builder: (context, projects, child) {
+                final viewModel = Provider.of<ProjectViewModel>(context, listen: false);
+                
                 // Initialize the viewModel if not already done
                 if (!viewModel.initialized && !viewModel.isLoading) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -53,13 +58,15 @@ class ProjectsSection extends StatelessWidget {
                 
                 // Show projects if we have any projects at all (regardless of loading state)
                 // This ensures projects show immediately when available from AppConfig
-                final shouldShowProjects = viewModel.projects.isNotEmpty;
+                final shouldShowProjects = projects.isNotEmpty;
                 
                 if (!shouldShowProjects) {
                   return _buildSkeletonGrid(context);
                 }
                 
-                if (viewModel.errorMessage != null) {
+                // Check error state (non-listening access)
+                final errorMessage = viewModel.errorMessage;
+                if (errorMessage != null) {
                   return Center(
                     child: Column(
                       children: [
@@ -77,9 +84,9 @@ class ProjectsSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          viewModel.errorMessage!,
+                          errorMessage,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.red.withOpacity(0.8),
+                            color: Colors.red.withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -93,28 +100,7 @@ class ProjectsSection extends StatelessWidget {
                   );
                 }
                 
-                if (viewModel.projects.isEmpty) {
-                  return Center(
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.folder_open,
-                          color: Colors.grey,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No projects available',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                
-                return _buildProjectsGrid(context, viewModel);
+                return _buildProjectsGrid(context, projects);
               },
             ),
           ],
@@ -179,23 +165,24 @@ class ProjectsSection extends StatelessWidget {
     );
   }
   
-  Widget _buildProjectsGrid(BuildContext context, ProjectViewModel viewModel) {
+  Widget _buildProjectsGrid(BuildContext context, List<dynamic> projects) {
     return AnimationLimiter(
       child: ResponsiveWrapper(
-        mobile: _buildProjectsList(context, viewModel, key: const Key('mobile-projects')),
-        tablet: _buildProjectsGrid2Columns(context, viewModel, key: const Key('tablet-projects')),
-        desktop: _buildProjectsGrid3Columns(context, viewModel, key: const Key('desktop-projects')),
+        mobile: _buildProjectsList(context, projects, key: const Key('mobile-projects')),
+        tablet: _buildProjectsGrid2Columns(context, projects, key: const Key('tablet-projects')),
+        desktop: _buildProjectsGrid3Columns(context, projects, key: const Key('desktop-projects')),
       ),
     );
   }
   
-  Widget _buildProjectsList(BuildContext context, ProjectViewModel viewModel, {Key? key}) {
+  Widget _buildProjectsList(BuildContext context, List<dynamic> projects, {Key? key}) {
     return ListView.builder(
       key: key,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: viewModel.projects.length,
+      itemCount: projects.length,
       itemBuilder: (context, index) {
+        final project = projects[index];
         return AnimationConfiguration.staggeredList(
           position: index,
           duration: const Duration(milliseconds: 600),
@@ -205,9 +192,9 @@ class ProjectsSection extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: ProjectCard(
-                  project: viewModel.projects[index],
-                  // Only the Details button will trigger this
-                  onTap: () => _showProjectDetails(context, viewModel.projects[index]),
+                  key: ValueKey(project.id), // Stable key to prevent rebuilds
+                  project: project,
+                  onTap: () => _showProjectDetails(context, project),
                 ),
               ),
             ),
@@ -217,7 +204,7 @@ class ProjectsSection extends StatelessWidget {
     );
   }
   
-  Widget _buildProjectsGrid2Columns(BuildContext context, ProjectViewModel viewModel, {Key? key}) {
+  Widget _buildProjectsGrid2Columns(BuildContext context, List<dynamic> projects, {Key? key}) {
     return LayoutBuilder(
       key: key,
       builder: (context, constraints) {
@@ -226,7 +213,7 @@ class ProjectsSection extends StatelessWidget {
         
         // At narrow tablet widths, use single column for better card display
         if (screenWidth < 650) {
-          return _buildProjectsList(context, viewModel, key: const Key('narrow-tablet-projects'));
+          return _buildProjectsList(context, projects, key: const Key('narrow-tablet-projects'));
         }
         
         // Calculate spacing and aspect ratio based on available width
@@ -243,8 +230,9 @@ class ProjectsSection extends StatelessWidget {
             mainAxisSpacing: mainAxisSpacing,
             childAspectRatio: aspectRatio,
           ),
-          itemCount: viewModel.projects.length,
+          itemCount: projects.length,
           itemBuilder: (context, index) {
+            final project = projects[index];
             return AnimationConfiguration.staggeredGrid(
               position: index,
               duration: const Duration(milliseconds: 600),
@@ -252,8 +240,9 @@ class ProjectsSection extends StatelessWidget {
               child: ScaleAnimation(
                 child: FadeInAnimation(
                   child: ProjectCard(
-                    project: viewModel.projects[index],
-                    onTap: () => _showProjectDetails(context, viewModel.projects[index]),
+                    key: ValueKey(project.id), // Stable key to prevent rebuilds
+                    project: project,
+                    onTap: () => _showProjectDetails(context, project),
                   ),
                 ),
               ),
@@ -264,7 +253,7 @@ class ProjectsSection extends StatelessWidget {
     );
   }
   
-  Widget _buildProjectsGrid3Columns(BuildContext context, ProjectViewModel viewModel, {Key? key}) {
+  Widget _buildProjectsGrid3Columns(BuildContext context, List<dynamic> projects, {Key? key}) {
     return LayoutBuilder(
       key: key,
       builder: (context, constraints) {
@@ -273,7 +262,7 @@ class ProjectsSection extends StatelessWidget {
         
         // Fallback to fewer columns on smaller screens
         if (screenWidth < 1200) {
-          return _buildProjectsGrid2Columns(context, viewModel, key: const Key('narrow-desktop-projects'));
+          return _buildProjectsGrid2Columns(context, projects, key: const Key('narrow-desktop-projects'));
         }
         
         return GridView.builder(
@@ -285,8 +274,9 @@ class ProjectsSection extends StatelessWidget {
             mainAxisSpacing: 24,
             childAspectRatio: 0.7,
           ),
-          itemCount: viewModel.projects.length,
+          itemCount: projects.length,
           itemBuilder: (context, index) {
+            final project = projects[index];
             return AnimationConfiguration.staggeredGrid(
               position: index,
               duration: const Duration(milliseconds: 600),
@@ -294,8 +284,9 @@ class ProjectsSection extends StatelessWidget {
               child: ScaleAnimation(
                 child: FadeInAnimation(
                   child: ProjectCard(
-                    project: viewModel.projects[index],
-                    onTap: () => _showProjectDetails(context, viewModel.projects[index]),
+                    key: ValueKey(project.id), // Stable key to prevent rebuilds
+                    project: project,
+                    onTap: () => _showProjectDetails(context, project),
                   ),
                 ),
               ),

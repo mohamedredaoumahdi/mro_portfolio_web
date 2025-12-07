@@ -28,25 +28,29 @@ class ProjectViewModel extends ChangeNotifier {
   // Initialize method to be called after widget build
   Future<void> initialize() async {
     if (!_initialized && !_isLoading) {
-      // Always load AppConfig data first as immediate fallback
-      _loadFromAppConfig();
-      // Notify listeners immediately so UI can show projects
-      notifyListeners();
-      
-      // Mark as initialized since we have AppConfig data
+      // Don't load AppConfig - only load from Firestore
+      // Mark as initialized
       _initialized = true;
       
-      // Then try to load from Firebase (this might update the data later)
+      // Load from Firebase only
       await loadProjects();
     }
   }
 
-  // Check if Firebase is available
+  // Cached Firebase availability check
+  static bool? _cachedFirebaseStatus;
+  
   bool get _isFirebaseAvailable {
+    if (_cachedFirebaseStatus != null) {
+      return _cachedFirebaseStatus!;
+    }
+    
     try {
-      return Firebase.apps.isNotEmpty;
+      _cachedFirebaseStatus = Firebase.apps.isNotEmpty;
+      return _cachedFirebaseStatus!;
     } catch (e) {
-      print('Firebase availability check error: $e');
+      debugPrint('Firebase availability check error: $e');
+      _cachedFirebaseStatus = false;
       return false;
     }
   }
@@ -73,26 +77,30 @@ class ProjectViewModel extends ChangeNotifier {
           
           // Add timeout to prevent getting stuck in loading state
           _timeoutTimer?.cancel();
-          _timeoutTimer = Timer(const Duration(seconds: 5), () {
+          _timeoutTimer = Timer(const Duration(seconds: 10), () {
             if (_isLoading) {
-              print('Firebase listener timeout - falling back to AppConfig data');
-              _loadFromAppConfig(); // This will set _isLoading = false
+              debugPrint('Firebase listener timeout - showing empty list (not using AppConfig)');
+              _projects = []; // Clear projects - don't use AppConfig
+              _isLoading = false;
+              _errorMessage = 'Connection timeout. Please check your internet connection.';
               notifyListeners();
             }
           });
           
           return; // Early return as listener will handle updates
         } catch (e) {
-          print(
-              'Error setting up Firestore listener: $e - Using AppConfig fallback');
-          // Firebase error - we already have AppConfig data, just set loading to false
+          debugPrint('Error setting up Firestore listener: $e - Showing empty list');
+          // Firebase error - show empty list, don't use AppConfig
+          _projects = [];
           _isLoading = false;
+          _errorMessage = 'Error connecting to Firestore. Will retry automatically.';
           notifyListeners();
           return;
         }
       } else {
-        // Firebase not available - we already have AppConfig data
-        print('Firebase not available, using AppConfig fallback');
+        // Firebase not available - show empty list
+        _projects = [];
+        debugPrint('Firebase not available - showing empty projects list');
       }
 
       _isLoading = false;
@@ -101,12 +109,12 @@ class ProjectViewModel extends ChangeNotifier {
       _isLoading = false;
       _errorMessage = 'Failed to load projects: ${e.toString()}';
       notifyListeners();
-      print('Error in ProjectViewModel: $_errorMessage');
+      debugPrint('Error in ProjectViewModel: $_errorMessage');
     }
   }
 
   void _setupRealTimeListener() {
-    print('Setting up real-time listener for projects...');
+    debugPrint('Setting up real-time listener for projects...');
 
     // Cancel existing subscription if any
     _subscription?.cancel();
@@ -118,7 +126,7 @@ class ProjectViewModel extends ChangeNotifier {
           .orderBy('order')
           .snapshots()
           .listen((snapshot) {
-        print('Real-time update for projects: ${snapshot.docs.length} items');
+        debugPrint('Real-time update for projects: ${snapshot.docs.length} items');
 
         final List<Project> updatedProjects = snapshot.docs.map((doc) {
           final data = doc.data();
@@ -154,24 +162,45 @@ class ProjectViewModel extends ChangeNotifier {
         _errorMessage = null;
         notifyListeners();
       }, onError: (e) {
-        print('Error in real-time listener: $e - falling back to AppConfig');
+        debugPrint('Error in real-time listener: $e');
         _timeoutTimer?.cancel(); // Cancel timeout since we're handling the error
-        _loadFromAppConfig(); // This will set _isLoading = false
+        
+        // Set user-friendly error message
+        if (e.toString().contains('permission-denied')) {
+          _errorMessage = 'Permission denied. Please check your authentication.';
+        } else if (e.toString().contains('unavailable')) {
+          _errorMessage = 'Service temporarily unavailable. Firestore offline mode will show cached data.';
+        } else if (e.toString().contains('deadline-exceeded')) {
+          _errorMessage = 'Request timed out. Firestore offline mode will show cached data.';
+        } else {
+          _errorMessage = 'Connection error. Firestore offline mode will show cached data.';
+        }
+        
+        // Don't load from AppConfig - let Firestore offline persistence handle it
+        // Only clear if we have no projects at all
+        if (_projects.isEmpty) {
+          debugPrint('No projects loaded, keeping empty list (not using AppConfig)');
+        } else {
+          debugPrint('Keeping existing ${_projects.length} projects from Firestore cache/offline mode');
+        }
+        
+        _isLoading = false;
         notifyListeners(); // Ensure UI updates
       }, onDone: () {
-        print('Projects listener closed');
+        debugPrint('Projects listener closed');
       });
     } catch (e) {
-      print('Exception setting up projects listener: $e');
+      debugPrint('Exception setting up projects listener: $e');
       _errorMessage = 'Error setting up projects listener: $e';
-      _loadFromAppConfig(); // This will set _isLoading = false  
+      _projects = []; // Clear projects - don't use AppConfig
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   // Load data from AppConfig as fallback
   void _loadFromAppConfig() {
-    print('Loading projects from AppConfig fallback');
+    debugPrint('Loading projects from AppConfig fallback');
     const projectsList = AppConfig.projects;
     _projects = List.generate(
       projectsList.length,
@@ -180,7 +209,7 @@ class ProjectViewModel extends ChangeNotifier {
         final project = Project.fromConfig(index, projectsList[index]);
 
         // Debug print
-        print(
+        debugPrint(
             'Loaded project from AppConfig: ${project.title}, screenshots: ${project.screenshots.length}');
 
         return project;
@@ -190,7 +219,7 @@ class ProjectViewModel extends ChangeNotifier {
     // Set loading to false since we have AppConfig data
     _isLoading = false;
     _errorMessage = null;
-    print('AppConfig projects loaded: ${_projects.length} projects');
+    debugPrint('AppConfig projects loaded: ${_projects.length} projects');
 
     // If coming from AppConfig, you could also try to load screenshots from Firestore separately
     // even if the rest of the project info is from AppConfig
@@ -232,7 +261,7 @@ class ProjectViewModel extends ChangeNotifier {
 
       // Update projects with screenshots from Firestore
       if (screenshotsByTitle.isNotEmpty) {
-        print(
+        debugPrint(
             'Found screenshots in Firestore for ${screenshotsByTitle.length} projects');
 
         for (int i = 0; i < _projects.length; i++) {
@@ -248,14 +277,14 @@ class ProjectViewModel extends ChangeNotifier {
               date: project.date,
               screenshots: screenshotsByTitle[project.title]!,
             );
-            print(
+            debugPrint(
                 'Updated screenshots for ${project.title}: ${screenshotsByTitle[project.title]!.length} screenshots');
           }
         }
         notifyListeners();
       }
     } catch (e) {
-      print('Error loading screenshots from Firestore: $e');
+      debugPrint('Error loading screenshots from Firestore: $e');
       // Continue with projects without screenshots
     }
   }

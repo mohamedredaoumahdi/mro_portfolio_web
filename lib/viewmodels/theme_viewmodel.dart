@@ -1,4 +1,5 @@
 // lib/viewmodels/theme_viewmodel.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,7 +43,7 @@ class ThemeViewModel extends ChangeNotifier {
       _isInitialized = true;
       notifyListeners();
     } catch (e) {
-      print('Error initializing theme: $e');
+      debugPrint('Error initializing theme: $e');
       // Continue with default theme (dark)
       _isDarkMode = true;
       _isInitialized = true;
@@ -65,7 +66,7 @@ class ThemeViewModel extends ChangeNotifier {
     try {
       await _saveThemePreference();
     } catch (e) {
-      print('Error saving theme preference: $e');
+      debugPrint('Error saving theme preference: $e');
     }
   }
   
@@ -78,7 +79,7 @@ class ThemeViewModel extends ChangeNotifier {
       try {
         await _saveThemePreference();
       } catch (e) {
-        print('Error saving theme preference: $e');
+        debugPrint('Error saving theme preference: $e');
       }
     }
   }
@@ -90,7 +91,7 @@ class ThemeViewModel extends ChangeNotifier {
       
       await _prefs!.setBool(_darkModeKey, _isDarkMode);
     } catch (e) {
-      print('Error saving theme preference: $e');
+      debugPrint('Error saving theme preference: $e');
       // Continue even if we couldn't save the preference
     }
   }

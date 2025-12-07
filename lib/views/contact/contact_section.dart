@@ -25,7 +25,7 @@ class ContactSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 80),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
         ),
         child: ResponsiveContainer(
           child: Column(
@@ -182,7 +182,7 @@ class ContactSection extends StatelessWidget {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -197,7 +197,7 @@ class ContactSection extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 4),

@@ -1,4 +1,5 @@
 // lib/services/firestore_setup_service.dart
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:portfolio_website/config/app_config.dart';
 
@@ -8,7 +9,7 @@ class FirestoreSetupService {
   // Initialize all required collections and documents
   Future<bool> initializeFirestore() async {
     try {
-      print('Starting Firestore initialization...');
+      debugPrint('Starting Firestore initialization...');
       
       // Create config collection and documents
       await _initializeConfigCollection();
@@ -19,10 +20,10 @@ class FirestoreSetupService {
       await _initializeCollection('contact_submissions');
       await _initializeCollection('analytics');
       
-      print('Firestore initialization completed successfully');
+      debugPrint('Firestore initialization completed successfully');
       return true;
     } catch (e) {
-      print('Error initializing Firestore: $e');
+      debugPrint('Error initializing Firestore: $e');
       return false;
     }
   }
@@ -34,7 +35,7 @@ class FirestoreSetupService {
     // Check and create personal_info document
     final personalInfoDoc = await configRef.doc('personal_info').get();
     if (!personalInfoDoc.exists) {
-      print('Creating personal_info document...');
+      debugPrint('Creating personal_info document...');
       await configRef.doc('personal_info').set({
         'name': AppConfig.name,
         'title': AppConfig.title,
@@ -50,7 +51,7 @@ class FirestoreSetupService {
     // Check and create social_links document
     final socialLinksDoc = await configRef.doc('social_links').get();
     if (!socialLinksDoc.exists) {
-      print('Creating social_links document...');
+      debugPrint('Creating social_links document...');
       await configRef.doc('social_links').set({
         'github': AppConfig.socialLinks.github,
         'linkedin': AppConfig.socialLinks.linkedin,
@@ -69,80 +70,23 @@ class FirestoreSetupService {
     // Check if the collection has any documents
     final snapshot = await _firestore.collection(collectionName).limit(1).get();
     
-    if (snapshot.docs.isEmpty && collectionName == 'projects') {
-      // Add sample projects from AppConfig
-      print('Initializing projects collection with sample data...');
-      
-      int index = 0;
-      for (var projectInfo in AppConfig.projects) {
-        await _firestore.collection('projects').add({
-          'title': projectInfo.title,
-          'description': projectInfo.description,
-          'technologies': projectInfo.technologies,
-          'youtubeVideoId': projectInfo.youtubeVideoId,
-          'thumbnailUrl': projectInfo.thumbnailUrl,
-          'order': index,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        index++;
-      }
+    if (collectionName == 'projects') {
+      // Projects collection - DO NOT auto-create projects from AppConfig
+      // Projects should ONLY be added through the admin dashboard
+      debugPrint('Projects collection initialized - projects must be added through admin dashboard only');
+      // Just ensure the collection exists (it will be created when first project is added via admin)
     }
     
     if (collectionName == 'services') {
-      // Sync services from AppConfig - add missing ones
-      print('Syncing services collection with AppConfig...');
-      
-      // Get existing services
-      final existingServicesSnapshot = await _firestore.collection('services').get();
-      final existingTitles = existingServicesSnapshot.docs
-          .map((doc) => doc.data()['title'] as String? ?? '')
-          .toSet();
-      
-      int maxOrder = -1;
-      for (var doc in existingServicesSnapshot.docs) {
-        final order = doc.data()['order'] as int? ?? 0;
-        if (order > maxOrder) maxOrder = order;
-      }
-      
-      // Add missing services from AppConfig
-      int index = maxOrder + 1;
-      for (var serviceInfo in AppConfig.services) {
-        if (!existingTitles.contains(serviceInfo.title)) {
-          print('Adding missing service: ${serviceInfo.title}');
-          await _firestore.collection('services').add({
-            'title': serviceInfo.title,
-            'description': serviceInfo.description,
-            'iconName': _getIconNameFromService(serviceInfo.title),
-            'order': index,
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          index++;
-        }
-      }
-      
-      // If collection was empty, initialize with all services
-      if (snapshot.docs.isEmpty) {
-        print('Initializing services collection with sample data...');
-        index = 0;
-        for (var serviceInfo in AppConfig.services) {
-          await _firestore.collection('services').add({
-            'title': serviceInfo.title,
-            'description': serviceInfo.description,
-            'iconName': _getIconNameFromService(serviceInfo.title),
-            'order': index,
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          index++;
-        }
-      }
+      // Services collection - DO NOT auto-create services from AppConfig
+      // Services should ONLY be added through the admin dashboard
+      debugPrint('Services collection initialized - services must be added through admin dashboard only');
+      // Just ensure the collection exists (it will be created when first service is added via admin)
     }
     
     if (snapshot.docs.isEmpty && collectionName == 'analytics') {
       // Initialize analytics documents
-      print('Initializing analytics documents...');
+      debugPrint('Initializing analytics documents...');
       
       await _firestore.collection('analytics').doc('page_visits').set({
         'pages': {},
@@ -160,16 +104,4 @@ class FirestoreSetupService {
     }
   }
   
-  // Helper method to assign icon names for services
-  String _getIconNameFromService(String title) {
-    if (title.contains('Mobile')) return 'phone_android';
-    if (title.contains('UI') || title.contains('UX')) return 'design_services';
-    if (title.contains('API')) return 'api';
-    if (title.contains('Maintenance')) return 'build';
-    if (title.contains('Flutter')) return 'flutter_dash';
-    if (title.contains('Firebase')) return 'local_fire_department';
-    if (title.contains('iOS') || title.contains('Swift')) return 'phone_iphone';
-    if (title.contains('Android')) return 'android';
-    return 'code'; // Default icon
-  }
 }

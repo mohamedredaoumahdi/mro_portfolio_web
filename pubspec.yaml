@@ -36,6 +36,9 @@ dependencies:
   cached_network_image: ^3.3.1
   flutter_cache_manager: ^3.3.1
   
+  # Visibility detection for lazy loading
+  visibility_detector: ^0.4.0+2
+  
   # Form validation
   email_validator: ^2.1.17
   

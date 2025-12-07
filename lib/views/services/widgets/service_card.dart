@@ -23,8 +23,8 @@ class _ServiceCardState extends State<ServiceCard> {
         ? Theme.of(context).colorScheme.surface
         : Colors.white;
     final borderColor = isDarkMode
-        ? Colors.grey.withOpacity(0.3)
-        : Colors.grey.withOpacity(0.2);
+        ? Colors.grey.withValues(alpha: 0.3)
+        : Colors.grey.withValues(alpha: 0.2);
     
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -49,13 +49,13 @@ class _ServiceCardState extends State<ServiceCard> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(isDarkMode ? 0.2 : 0.15),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: isDarkMode ? 0.2 : 0.15),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                         spreadRadius: 0,
                       ),
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.12),
+                        color: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.12),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                         spreadRadius: 0,
@@ -63,7 +63,7 @@ class _ServiceCardState extends State<ServiceCard> {
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
+                        color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.08),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                         spreadRadius: 0,
@@ -81,16 +81,16 @@ class _ServiceCardState extends State<ServiceCard> {
               width: _isHovered ? 115 : 110,
               height: _isHovered ? 115 : 110,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(_isHovered ? 0.15 : 0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: _isHovered ? 0.15 : 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(_isHovered ? 0.4 : 0.3),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: _isHovered ? 0.4 : 0.3),
                   width: _isHovered ? 1.5 : 1,
                 ),
                 boxShadow: _isHovered
                     ? [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                           blurRadius: 12,
                           spreadRadius: 2,
                         ),

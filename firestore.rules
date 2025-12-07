@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user has admin access
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.admin == true;
+    }
+    
+    // Projects collection - public read, admin write
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Services collection - public read, admin write
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Config collection - public read, admin write
+    match /config/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Contact submissions - public can create, admin can read/delete
+    match /contact_submissions/{submissionId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'email', 'message', 'timestamp']) &&
+                       request.resource.data.name is string &&
+                       request.resource.data.email is string &&
+                       request.resource.data.message is string &&
+                       request.resource.data.name.size() > 0 &&
+                       request.resource.data.email.size() > 0 &&
+                       request.resource.data.message.size() > 0;
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // Analytics collection - admin only
+    match /analytics/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Activities collection - admin only
+    match /activities/{activityId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

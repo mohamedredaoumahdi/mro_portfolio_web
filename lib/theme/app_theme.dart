@@ -126,7 +126,7 @@ class AppTheme {
       scaffoldBackgroundColor: backgroundColor,
       cardTheme: CardThemeData(
         color: isDarkMode 
-            ? Color(config.backgroundColor).withOpacity(0.7) 
+            ? Color(config.backgroundColor).withValues(alpha: 0.7) 
             : Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -155,26 +155,26 @@ class AppTheme {
         size: 24,
       ),
       dividerTheme: DividerThemeData(
-        color: textSecondaryColor.withOpacity(0.2),
+        color: textSecondaryColor.withValues(alpha: 0.2),
         thickness: 1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: backgroundColor.withOpacity(0.3),
+        fillColor: backgroundColor.withValues(alpha: 0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Color(config.primaryColor)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(config.primaryColor).withOpacity(0.3)),
+          borderSide: BorderSide(color: Color(config.primaryColor).withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Color(config.primaryColor)),
         ),
         labelStyle: TextStyle(color: textSecondaryColor),
-        hintStyle: TextStyle(color: textSecondaryColor.withOpacity(0.5)),
+        hintStyle: TextStyle(color: textSecondaryColor.withValues(alpha: 0.5)),
       ),
     );
   }
@@ -202,7 +202,7 @@ class AppTheme {
     return LinearGradient(
       colors: [
         backgroundColor,
-        backgroundColor.withOpacity(0.8),
+        backgroundColor.withValues(alpha: 0.8),
       ],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,

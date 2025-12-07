@@ -43,7 +43,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                         Text(
                           'Create and manage services for your portfolio',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -75,7 +75,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                             Text(
                               'Create and manage services for your portfolio',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
@@ -99,7 +99,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.red),
                 ),
@@ -138,8 +138,17 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
   }
   
   Widget _buildServicesList(BuildContext context) {
-    return Consumer<ServiceViewModel>(
-      builder: (context, serviceViewModel, child) {
+    return Selector<ServiceViewModel, List<Service>>(
+      selector: (context, viewModel) => viewModel.services,
+      shouldRebuild: (prev, next) {
+        // Only rebuild if the list actually changed
+        if (prev.length != next.length) return true;
+        final prevIds = prev.map((s) => s.id).toSet();
+        final nextIds = next.map((s) => s.id).toSet();
+        return !prevIds.containsAll(nextIds) || !nextIds.containsAll(prevIds);
+      },
+      builder: (context, services, child) {
+        final serviceViewModel = Provider.of<ServiceViewModel>(context, listen: false);
         if (serviceViewModel.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -163,7 +172,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                 Text(
                   serviceViewModel.errorMessage!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -184,7 +193,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
               children: [
                 Icon(
                   Icons.design_services,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                   size: 64,
                 ),
                 const SizedBox(height: 16),
@@ -196,7 +205,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                 Text(
                   'Add your first service using the button above',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -204,8 +213,17 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
           );
         }
         
+        // Deduplicate services by ID before displaying
+        final uniqueServices = <String, Service>{};
+        for (var service in services) {
+          if (!uniqueServices.containsKey(service.id)) {
+            uniqueServices[service.id] = service;
+          }
+        }
+        final displayServices = uniqueServices.values.toList();
+        
         return ReorderableListView.builder(
-          itemCount: serviceViewModel.services.length,
+          itemCount: displayServices.length,
           buildDefaultDragHandles: false,
           onReorder: (oldIndex, newIndex) {
             // Handle reordering
@@ -222,7 +240,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
             );
           },
           itemBuilder: (context, index) {
-            final service = serviceViewModel.services[index];
+            final service = displayServices[index];
             
             return Container(
               key: Key(service.id),
@@ -270,7 +288,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                           cursor: SystemMouseCursors.grab,
                                           child: Icon(
                                             Icons.drag_handle,
-                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                             size: 18,
                                           ),
                                         ),
@@ -281,7 +299,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                         width: 50,
                                         height: 50,
                                         decoration: BoxDecoration(
-                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(10),
                                         ),
                                         child: Icon(
@@ -317,7 +335,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                     child: Container(
                                       decoration: BoxDecoration(
                                         border: Border.all(
-                                          color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                         ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -348,7 +366,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                           Container(
                                             width: 1,
                                             height: 20,
-                                            color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                            color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                           ),
                                           Material(
                                             color: Colors.transparent,
@@ -386,7 +404,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                       cursor: SystemMouseCursors.grab,
                                       child: Icon(
                                         Icons.drag_handle,
-                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                         size: 20,
                                       ),
                                     ),
@@ -398,7 +416,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                     width: isTablet ? 45 : 50,
                                     height: isTablet ? 45 : 50,
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Icon(
@@ -434,7 +452,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                   Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                        color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -465,7 +483,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
                                         Container(
                                           width: 1,
                                           height: isTablet ? 20 : 24,
-                                          color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                         ),
                                         Material(
                                           color: Colors.transparent,
@@ -535,8 +553,7 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
       builder: (context) => ServiceFormDialog(
         service: isEditing ? _selectedService : null,
         onSave: () {
-          Navigator.pop(context);
-          // Refresh the services list
+          // Just refresh the services list - dialog will be closed by the form itself
           context.read<ServiceViewModel>().loadServices();
         },
       ),
@@ -549,44 +566,113 @@ class _ServicesManagerScreenState extends State<ServicesManagerScreen> {
   }
   
   void _showDeleteConfirmation(BuildContext context, Service service) {
+    // Save references before showing dialog
+    final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
+    final serviceViewModel = context.read<ServiceViewModel>();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Service'),
         content: Text('Are you sure you want to delete "${service.title}"? This action cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
-              final activityViewModel = Provider.of<ActivityViewModel>(context, listen: false);
-              await activityViewModel.logActivity(
-                type: 'delete',
-                message: 'You deleted the "${service.title}" service',
-                entityId: service.id,
-                metadata: {'title': service.title, 'type': 'service'},
-              );
-              Navigator.pop(context);
-              setState(() {
-                _isLoading = true;
-              });
+              // Close dialog first
+              Navigator.pop(dialogContext);
+              
+              // Wait a frame to ensure dialog is fully closed
+              await Future.delayed(const Duration(milliseconds: 100));
+              
+              // Check if widget is still mounted before proceeding
+              if (!mounted) return;
+              
+              // Set loading state
+              if (mounted) {
+                setState(() {
+                  _isLoading = true;
+                  _errorMessage = null; // Clear any previous errors
+                });
+              }
               
               try {
-                // Delete the service from Firestore
+                // Validate service ID before deletion
+                if (service.id.isEmpty) {
+                  throw Exception('Invalid service ID: service ID is empty');
+                }
+                
+                debugPrint('Attempting to delete service with ID: ${service.id}');
+                
+                // Delete the service from Firestore first
                 await FirestoreService.instance.deleteService(service.id);
                 
-                // Refresh the services list
+                debugPrint('Service ${service.id} deleted successfully from Firestore');
+                
+                // Log activity after successful deletion
+                try {
+                  await activityViewModel.logActivity(
+                    type: 'delete',
+                    message: 'You deleted the "${service.title}" service',
+                    entityId: service.id,
+                    metadata: {'title': service.title, 'type': 'service'},
+                  );
+                } catch (logError) {
+                  // Don't fail deletion if logging fails
+                  debugPrint('Failed to log activity: $logError');
+                }
+                
+                // Refresh the services list - this will get fresh data from Firestore
                 if (mounted) {
-                  context.read<ServiceViewModel>().loadServices();
+                  // Force reload from Firestore, don't use cache
+                  await serviceViewModel.loadServices();
+                  
+                  // Clear loading state
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = false;
+                      _errorMessage = null;
+                    });
+                  }
+                  
+                  // Show success message
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Service "${service.title}" deleted successfully'),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
                 }
               } catch (e) {
-                setState(() {
-                  _errorMessage = 'Failed to delete service: ${e.toString()}';
-                  _isLoading = false;
-                });
+                debugPrint('Error deleting service: $e');
+                debugPrint('Stack trace: ${StackTrace.current}');
+                
+                // Only update state if widget is still mounted
+                if (mounted) {
+                  setState(() {
+                    _errorMessage = 'Failed to delete service: ${e.toString()}';
+                    _isLoading = false;
+                  });
+                  
+                  // Show error message
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete service: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                }
               }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -677,7 +763,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.red),
                     ),
@@ -758,7 +844,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog> {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
@@ -838,6 +924,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog> {
       
       try {
         final firestoreService = FirestoreService.instance;
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
         
         final serviceData = {
           'title': _titleController.text,
@@ -858,7 +945,19 @@ class _ServiceFormDialogState extends State<ServiceFormDialog> {
             metadata: {'title': _titleController.text, 'type': 'service'},
           );
   
-          // Call onSave callback
+          // Close dialog and show success message
+          if (mounted) {
+            Navigator.pop(context);
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Text('Service "${_titleController.text}" updated successfully'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+          
+          // Call onSave callback to refresh the list
           widget.onSave();
         } else {
           // After creating new service
@@ -873,17 +972,28 @@ class _ServiceFormDialogState extends State<ServiceFormDialog> {
             metadata: {'title': _titleController.text, 'type': 'service'},
           );
   
-          // Call onSave callback
+          // Close dialog and show success message
+          if (mounted) {
+            Navigator.pop(context);
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Text('Service "${_titleController.text}" added successfully'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+          
+          // Call onSave callback to refresh the list
           widget.onSave();
         }
-        
-        // Call onSave callback
-        widget.onSave();
       } catch (e) {
-        setState(() {
-          _errorMessage = 'Failed to save service: ${e.toString()}';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Failed to save service: ${e.toString()}';
+            _isLoading = false;
+          });
+        }
       }
     }
   }

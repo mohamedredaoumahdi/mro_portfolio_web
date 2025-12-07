@@ -45,7 +45,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                         Text(
                           'Create and manage projects for your portfolio',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -77,7 +77,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                             Text(
                               'Create and manage projects for your portfolio',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
@@ -101,7 +101,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.red),
                   ),
@@ -165,7 +165,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                 Text(
                   projectViewModel.errorMessage!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -186,7 +186,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
               children: [
                 Icon(
                   Icons.folder_open,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                   size: 64,
                 ),
                 const SizedBox(height: 16),
@@ -198,7 +198,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                 Text(
                   'Add your first project using the button above',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -210,18 +210,27 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
           itemCount: projectViewModel.projects.length,
           buildDefaultDragHandles: false,
           onReorder: (oldIndex, newIndex) {
-            // Handle reordering
-            if (oldIndex < newIndex) {
-              newIndex -= 1;
-            }
-            // Implement reordering logic with Firestore
+            // Don't adjust newIndex here - let FirestoreService handle it
+            // The ReorderableListView already provides the correct indices
             FirestoreService.instance.reorderProjects(oldIndex, newIndex).then((_) {
-              // Refresh the projects list
-              projectViewModel.loadProjects();
+              // Don't manually refresh - the real-time listener will update automatically
+              debugPrint('Project reorder completed, waiting for real-time update');
             }).catchError((error) {
-              setState(() {
-                _errorMessage = 'Failed to reorder projects: $error';
-              });
+              debugPrint('Error reordering projects: $error');
+              if (mounted) {
+                setState(() {
+                  _errorMessage = 'Failed to reorder projects: ${error.toString()}';
+                });
+                
+                // Show error snackbar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to reorder projects: ${error.toString()}'),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
             });
           },
           proxyDecorator: (child, index, animation) {
@@ -280,7 +289,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                                         cursor: SystemMouseCursors.grab,
                                         child: Icon(
                                           Icons.drag_handle,
-                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                           size: 18,
                                         ),
                                       ),
@@ -331,7 +340,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                        color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -362,7 +371,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                                         Container(
                                           width: 1,
                                           height: 20,
-                                          color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                         ),
                                         Material(
                                           color: Colors.transparent,
@@ -400,7 +409,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                                     cursor: SystemMouseCursors.grab,
                                     child: Icon(
                                       Icons.drag_handle,
-                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                       size: 20,
                                     ),
                                   ),
@@ -455,7 +464,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                                 Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                      color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                     ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -486,7 +495,7 @@ class _ProjectManagerScreenState extends State<ProjectManagerScreen> {
                                       Container(
                                         width: 1,
                                         height: isTablet ? 20 : 24,
-                                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                                        color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                                       ),
                                       Material(
                                         color: Colors.transparent,
@@ -678,7 +687,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.red),
                     ),
@@ -864,7 +873,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                         Text(
                           'Add screenshots of your project to showcase features and UI',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -968,7 +977,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                         horizontal: 8,
                         vertical: 4,
                       ),
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       child: Text(
                         screenshot.caption,
                         style: const TextStyle(
@@ -986,8 +995,8 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () => _selectScreenshot(screenshot),
-                    splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                    highlightColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    splashColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    highlightColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(7),
                     child: Container(),
                   ),
@@ -1003,7 +1012,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
           right: 4,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               shape: BoxShape.circle,
             ),
             child: IconButton(

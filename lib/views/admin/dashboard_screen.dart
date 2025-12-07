@@ -1,4 +1,5 @@
 // lib/views/admin/dashboard_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:portfolio_website/models/project_model.dart';
 import 'package:portfolio_website/services/firestore_service.dart';
@@ -223,7 +224,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
         _errorMessage = 'Error loading dashboard data: ${e.toString()}';
         _isLoading = false;
       });
-      print('Dashboard data error: $e');
+      debugPrint('Dashboard data error: $e');
     }
   }
 
@@ -295,7 +296,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                           Text(
                             'Manage your portfolio content and view analytics',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -368,7 +369,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                           Text(
                             'Manage your portfolio content and view analytics',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -452,9 +453,9 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -485,7 +486,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Theme.of(context).dividerColor.withOpacity(0.2),
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(
@@ -505,7 +506,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                           'Activities will appear here as you interact with your portfolio',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -520,7 +521,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                         color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(context).dividerColor.withOpacity(0.2),
+                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
@@ -556,7 +557,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                                 border: index < activities.length - 1
                                     ? Border(
                                         bottom: BorderSide(
-                                          color: Theme.of(context).dividerColor.withOpacity(0.1),
+                                          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                                           width: 1,
                                         ),
                                       )
@@ -567,7 +568,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: iconColor.withOpacity(0.1),
+                                      color: iconColor.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Icon(icon, color: iconColor, size: 18),
@@ -587,7 +588,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                                         Text(
                                           activity.timeAgo,
                                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                             fontSize: 12,
                                           ),
                                         ),
@@ -657,7 +658,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
             colors: isDarkMode
                 ? [
                     Theme.of(context).cardColor,
-                    Theme.of(context).cardColor.withOpacity(0.8),
+                    Theme.of(context).cardColor.withValues(alpha: 0.8),
                   ]
                 : [
                     Colors.white,
@@ -665,7 +666,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                   ],
           ),
           border: Border.all(
-            color: primaryColor.withOpacity(0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -681,13 +682,13 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    primaryColor.withOpacity(0.15),
-                    primaryColor.withOpacity(0.08),
+                    primaryColor.withValues(alpha: 0.15),
+                    primaryColor.withValues(alpha: 0.08),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: primaryColor.withOpacity(0.2),
+                  color: primaryColor.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -714,7 +715,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
               title,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
@@ -779,12 +780,12 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.2),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -800,13 +801,13 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            primaryColor.withOpacity(0.15),
-                            primaryColor.withOpacity(0.08),
+                            primaryColor.withValues(alpha: 0.15),
+                            primaryColor.withValues(alpha: 0.08),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: primaryColor.withOpacity(0.2),
+                          color: primaryColor.withValues(alpha: 0.2),
                           width: 1,
                         ),
                       ),
@@ -830,7 +831,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                     Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ],
                 ),

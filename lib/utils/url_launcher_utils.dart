@@ -1,4 +1,5 @@
 // lib/utils/url_launcher_utils.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -26,7 +27,7 @@ class UrlLauncherUtils {
         throw 'Could not launch $urlToLaunch';
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      debugPrint('Error launching URL: $e');
       
       // Show snackbar if context is provided and showErrorSnackbar is true
       if (showErrorSnackbar && context != null) {
@@ -80,7 +81,7 @@ class UrlLauncherUtils {
       final uri = Uri.parse(url);
       return uri.host;
     } catch (e) {
-      print('Error extracting domain: $e');
+      debugPrint('Error extracting domain: $e');
       return url;
     }
   }

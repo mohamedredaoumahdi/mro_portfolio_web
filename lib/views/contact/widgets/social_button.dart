@@ -1,4 +1,5 @@
 // lib/views/contact/widgets/social_button.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:portfolio_website/main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -59,7 +60,7 @@ class _SocialButtonState extends State<SocialButton> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error fetching social link: $e');
+      debugPrint('Error fetching social link: $e');
       // Fallback to the provided URL on error
       setState(() {
         _actualUrl = widget.url;
@@ -85,7 +86,7 @@ class _SocialButtonState extends State<SocialButton> {
           decoration: BoxDecoration(
             color: _isHovered
                 ? (widget.color ?? Theme.of(context).colorScheme.primary)
-                : (widget.color ?? Theme.of(context).colorScheme.primary).withOpacity(0.1),
+                : (widget.color ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(

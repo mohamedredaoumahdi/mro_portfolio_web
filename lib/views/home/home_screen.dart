@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:portfolio_website/viewmodels/profile_viewmodel.dart';
 import 'package:provider/provider.dart';
@@ -78,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _errorMessage = 'Failed to load data: $e';
       });
-      print('HomeScreen initialization error: $e');
+      debugPrint('HomeScreen initialization error: $e');
     }
   }
 
@@ -114,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
             floating: true,
             pinned: true,
             elevation: 0,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.9),
             expandedHeight: 60,
             centerTitle: false,
             flexibleSpace: NavBar(
@@ -126,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_errorMessage != null)
             SliverToBoxAdapter(
               child: Container(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
@@ -222,11 +223,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroContent(BuildContext context) {
-    return Consumer<ProfileViewModel>(
-      builder: (context, profileViewModel, _) {
-        final name = profileViewModel.name;
-        final title = profileViewModel.title;
-        final aboutMe = profileViewModel.aboutMe;
+    return Selector<ProfileViewModel, String>(
+      selector: (_, vm) => vm.name,
+      builder: (context, name, child) {
+        return Selector<ProfileViewModel, String>(
+          selector: (_, vm) => vm.title,
+          builder: (context, title, child) {
+            return Selector<ProfileViewModel, String>(
+              selector: (_, vm) => vm.aboutMe,
+              builder: (context, aboutMe, _) {
         
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,6 +305,10 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
             if (context.isMobile) const SizedBox(height: 30),
           ],
+        );
+              },
+            );
+          },
         );
       },
     );

@@ -41,12 +41,20 @@ class SocialLinksViewModel extends ChangeNotifier {
     }
   }
 
-  // Check if Firebase is available
+  // Cached Firebase availability check
+  static bool? _cachedFirebaseStatus;
+  
   bool get _isFirebaseAvailable {
+    if (_cachedFirebaseStatus != null) {
+      return _cachedFirebaseStatus!;
+    }
+    
     try {
-      return Firebase.apps.isNotEmpty;
+      _cachedFirebaseStatus = Firebase.apps.isNotEmpty;
+      return _cachedFirebaseStatus!;
     } catch (e) {
-      print('Firebase availability check error: $e');
+      debugPrint('Firebase availability check error: $e');
+      _cachedFirebaseStatus = false;
       return false;
     }
   }
@@ -69,14 +77,14 @@ class SocialLinksViewModel extends ChangeNotifier {
           _setupRealTimeListener();
           return; // Early return as listener will handle updates
         } catch (e) {
-          print('Error setting up Firestore listener: $e - Falling back to local config');
+          debugPrint('Error setting up Firestore listener: $e - Falling back to local config');
           // Firebase error - fall back to local config
           _loadFromAppConfig();
         }
       } else {
         // Firebase not available - use local config
         _loadFromAppConfig();
-        print('Firebase not available, using AppConfig fallback for social links');
+        debugPrint('Firebase not available, using AppConfig fallback for social links');
       }
 
       _isLoading = false;
@@ -85,13 +93,13 @@ class SocialLinksViewModel extends ChangeNotifier {
       _isLoading = false;
       _errorMessage = 'Failed to load social links: ${e.toString()}';
       notifyListeners();
-      print('Error in SocialLinksViewModel: $_errorMessage');
+      debugPrint('Error in SocialLinksViewModel: $_errorMessage');
     }
   }
   
   // Set up real-time listener for social_links document
   void _setupRealTimeListener() {
-    print('Setting up real-time listener for social links...');
+    debugPrint('Setting up real-time listener for social links...');
     
     // Cancel existing subscription if any
     _subscription?.cancel();
@@ -105,7 +113,7 @@ class SocialLinksViewModel extends ChangeNotifier {
           .listen((docSnapshot) {
             if (docSnapshot.exists) {
               final data = docSnapshot.data() as Map<String, dynamic>;
-              print('Real-time update for social links received');
+              debugPrint('Real-time update for social links received');
               
               Map<String, String> links = {};
               data.forEach((key, value) {
@@ -120,13 +128,13 @@ class SocialLinksViewModel extends ChangeNotifier {
               _errorMessage = null;
               notifyListeners();
             } else {
-              print('social_links document does not exist, falling back to AppConfig');
+              debugPrint('social_links document does not exist, falling back to AppConfig');
               _loadFromAppConfig();
               _isLoading = false;
               notifyListeners();
             }
           }, onError: (e) {
-            print('Error in real-time listener: $e');
+            debugPrint('Error in real-time listener: $e');
             _errorMessage = 'Error loading social links: $e';
             _loadFromAppConfig();
             _isLoading = false;
@@ -136,14 +144,14 @@ class SocialLinksViewModel extends ChangeNotifier {
       // Set timeout for initial data fetch
       Timer(const Duration(seconds: 5), () {
         if (_isLoading) {
-          print('Firebase social links data fetch timed out, falling back to AppConfig');
+          debugPrint('Firebase social links data fetch timed out, falling back to AppConfig');
           _loadFromAppConfig();
           _isLoading = false;
           notifyListeners();
         }
       });
     } catch (e) {
-      print('Exception setting up social links listener: $e');
+      debugPrint('Exception setting up social links listener: $e');
       _errorMessage = 'Error setting up social links listener: $e';
       _loadFromAppConfig();
       _isLoading = false;
@@ -153,7 +161,7 @@ class SocialLinksViewModel extends ChangeNotifier {
   
   // Load data from AppConfig as fallback
   void _loadFromAppConfig() {
-    print('Loading social links from AppConfig fallback');
+    debugPrint('Loading social links from AppConfig fallback');
     _socialLinks = {
       'github': AppConfig.socialLinks.github,
       'linkedin': AppConfig.socialLinks.linkedin,

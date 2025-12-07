@@ -7,8 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'theme/app_theme.dart';
+import 'config/firebase_config.dart';
 import 'viewmodels/project_viewmodel.dart';
 import 'viewmodels/service_viewmodel.dart';
 import 'viewmodels/contact_viewmodel.dart';
@@ -27,13 +29,14 @@ bool useFirebase = false;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  try {
-    // Try initializing Firebase with proper error handling
-    await initializeFirebaseWithTimeout();
-  } catch (e) {
-    print('Failed to initialize Firebase: $e');
-    runAppWithoutFirebase();
-  }
+  // Start app immediately, initialize Firebase in background
+  await loadFonts();
+  runApp(const MyApp());
+  
+  // Initialize Firebase in background (non-blocking)
+  initializeFirebaseWithTimeout().catchError((e) {
+    debugPrint('Failed to initialize Firebase: $e');
+  });
 }
 
 // Initialize Firebase with timeout and proper error handling
@@ -41,25 +44,23 @@ Future<void> initializeFirebaseWithTimeout() async {
   // Create a completer to properly handle the initialization
   Completer<bool> initCompleter = Completer<bool>();
   
-  // Set a timeout for Firebase initialization
-  Timer? timeoutTimer = Timer(const Duration(seconds: 10), () {
+  // Set a timeout for Firebase initialization (reduced from 10 to 5 seconds)
+  Timer? timeoutTimer = Timer(const Duration(seconds: 5), () {
     if (!initCompleter.isCompleted) {
-      print('Firebase initialization timed out, continuing without Firebase');
+      debugPrint('Firebase initialization timed out, continuing without Firebase');
       initCompleter.complete(false);
     }
   });
   
   try {
-    // Try to initialize Firebase
+    // Validate Firebase config
+    if (!FirebaseConfig.isValid) {
+      throw Exception('Firebase configuration is invalid. Please check environment variables.');
+    }
+    
+    // Try to initialize Firebase using environment variables
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyDIEiJa91VRseWa3udLSfN0bhAKhezssQc",
-        authDomain: "myportfolio-594b1.firebaseapp.com",
-        projectId: "myportfolio-594b1",
-        storageBucket: "myportfolio-594b1.firebasestorage.app",
-        messagingSenderId: "115489897719",
-        appId: "1:115489897719:web:4337415f01a45598c027f2",
-      ),
+      options: FirebaseConfig.options,
     );
     
     if (!initCompleter.isCompleted) {
@@ -67,7 +68,7 @@ Future<void> initializeFirebaseWithTimeout() async {
       initCompleter.complete(true);
     }
   } catch (e) {
-    print('Error initializing Firebase: $e');
+    debugPrint('Error initializing Firebase: $e');
     if (!initCompleter.isCompleted) {
       initCompleter.complete(false);
     }
@@ -78,37 +79,38 @@ Future<void> initializeFirebaseWithTimeout() async {
   timeoutTimer.cancel();
   
   if (firebaseInitialized) {
+    useFirebase = true;
+    
+    // Enable Firestore offline persistence
+    try {
+      final firestore = FirebaseFirestore.instance;
+      firestore.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      );
+      debugPrint('Firestore offline persistence enabled');
+    } catch (e) {
+      debugPrint('Failed to enable Firestore offline persistence: $e');
+    }
+    
     // Initialize Analytics if available
     try {
       final analytics = FirebaseAnalytics.instance;
       analytics.logAppOpen();
     } catch (e) {
-      print('Analytics not initialized: $e');
+      debugPrint('Analytics not initialized: $e');
     }
     
-    // Initialize Firestore collections
-    try {
-      final firestoreSetupService = FirestoreSetupService();
-      await firestoreSetupService.initializeFirestore();
-    } catch (e) {
-      print('Failed to initialize Firestore collections: $e');
-      // Continue with app startup even if collection initialization fails
-    }
-    
-    // Continue with loading fonts and running the app
-    await loadFonts();
-    runApp(const MyApp());
+    // Initialize Firestore collections in background (don't block app startup)
+    FirestoreSetupService().initializeFirestore().catchError((e) {
+      debugPrint('Failed to initialize Firestore collections: $e');
+    });
   } else {
-    runAppWithoutFirebase();
+    useFirebase = false;
   }
 }
 
-// Fallback to run app without Firebase
-void runAppWithoutFirebase() async {
-  useFirebase = false;
-  await loadFonts();
-  runApp(const MyApp());
-}
+// This function is no longer needed - app starts immediately now
 
 // Load required fonts
 Future<void> loadFonts() async {
@@ -119,7 +121,7 @@ Future<void> loadFonts() async {
       GoogleFonts.firaSansTextTheme(),
     ]);
   } catch (e) {
-    print('Font loading error: $e');
+    debugPrint('Font loading error: $e');
     // Continue without custom fonts if there's an error
   }
 }
@@ -196,7 +198,7 @@ Future<void> launchURL(String url) async {
       throw 'Could not launch $urlToLaunch';
     }
   } catch (e) {
-    print('Error launching URL: $e');
+    debugPrint('Error launching URL: $e');
     // You could also show a snackbar or dialog here to inform the user
   }
 }
